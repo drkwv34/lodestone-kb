@@ -99,13 +99,13 @@ def test_fr_010_gitignore_parent_and_nested_negation(tmp_path: Path) -> None:
 
 
 def test_fr_010_defaults_and_unsupported(tmp_path: Path) -> None:
-    (tmp_path / "ignored.py").write_text("pass")
+    (tmp_path / "ignored.csv").write_text("pass")
     (tmp_path / "big.txt").write_bytes(b"x" * (1024 * 1024 + 1))
     connector = FilesConnector()
     assert list(connector.discover(Source(name="x", kind="files", path=tmp_path))) == []
     assert {skip.reason for skip in connector.skipped} == {
         "oversize",
-        "unsupported extension (Day 2: md/txt/rst)",
+        "unsupported extension",
     }
 
 
@@ -119,3 +119,20 @@ def test_fr_010_gitignore_limit_independent_and_fail_closed(tmp_path: Path) -> N
     (tmp_path / ".gitignore").write_bytes(b"\xff")
     assert list(connector.discover(source)) == []
     assert connector.skipped[0].path == ".gitignore"
+
+
+def test_fr_010_code_kinds_keep_file_safety_rules(tmp_path: Path) -> None:
+    from lodestone.connectors.files import CODE_KINDS
+
+    for language in CODE_KINDS:
+        (tmp_path / f"valid.{language}").write_text("source text", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("ignored.py\n")
+    (tmp_path / "ignored.py").write_text("pass")
+    (tmp_path / "binary.js").write_bytes(b"\x00\x01")
+    (tmp_path / "large.rs").write_text("x" * 101)
+    connector = FilesConnector()
+    found = list(
+        connector.discover(Source(name="code", kind="files", path=tmp_path, max_file_bytes=100))
+    )
+    assert {item.ext_id for item in found} == {f"valid.{language}" for language in CODE_KINDS}
+    assert {skip.reason for skip in connector.skipped} == {"ignored", "binary", "oversize"}
