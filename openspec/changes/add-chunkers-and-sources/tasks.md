@@ -13,4 +13,4 @@
 
 ## 4. Verification
 - [x] 4.1 Run strict OpenSpec validation, coverage, strict typing, lint, import contracts and module limits.
-- [ ] 4.2 Paste requirement evidence and demo transcript; publish a ready PR and record successful CI for its head.
+- [x] 4.2 Paste requirement evidence and demo transcript; publish a ready PR and record successful CI for its head.

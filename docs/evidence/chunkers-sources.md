@@ -17,7 +17,7 @@ Change 'add-chunkers-and-sources' is valid
 ```text
 $ openspec list
 Changes:
-  add-chunkers-and-sources     8/9 tasks     just now
+  add-chunkers-and-sources     ✓ Complete    just now
 ```
 
 The change remains active until merge; archive is deferred to the requested follow-up.
@@ -150,10 +150,11 @@ $ lodestone sync
 
 ## Authorship snapshot
 
-Snapshot through `ca52caa`; the PR description will include the final head range.
+Snapshot through `58c11a1`; the PR description will include the final head range.
 
 ```text
 $ git log day-2..HEAD --format='%h %an <%ae> | %cn <%ce>'
+58c11a1 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 ca52caa Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 239c9bb Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 391bf5a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -172,4 +173,65 @@ The range begins at the existing tag; older history is retained.
 
 ## CI
 
-Pending publication and PR-head checks.
+PR: https://github.com/drkwv34/lodestone-kb/pull/3
+
+```text
+GitHub Actions API output (selected fields):
+id: 39070348557
+head_sha: 58c11a198486d221592b01a60b8110548d8a402c
+html_url: https://github.com/drkwv34/lodestone-kb/actions/runs/39070348557
+status: completed
+conclusion: success
+
+[
+  {
+    "name": "openspec",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "licenses",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "build",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "lint-type",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (windows-latest, 3.12, true)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (ubuntu-latest, 3.13)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (ubuntu-latest, 3.11)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (ubuntu-latest, 3.12)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (macos-latest, 3.12)",
+    "status": "completed",
+    "conclusion": "success"
+  }
+]
+```
+
+This records the verified PR head `58c11a1`. Updating tracked evidence changes
+HEAD; final-head CI and the complete authorship range are pasted in the PR
+description. Merge and subsequent OpenSpec archive remain deferred.
