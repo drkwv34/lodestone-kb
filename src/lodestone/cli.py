@@ -4,22 +4,31 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import sqlite3
 from dataclasses import asdict
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
-from lodestone.config import Config, ConfigError, load_config, redact
+from lodestone.config import Config, ConfigError, Source, load_config, redact
 from lodestone.lanes.fts import LaneName
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, probe_fts5
-from lodestone.workspace import initialise, search_workspace, sync_workspace
+from lodestone.workspace import (
+    initialise,
+    search_workspace,
+    source_list,
+    sync_workspace,
+    update_source,
+)
 
 app = typer.Typer(no_args_is_help=True, help="Lodestone local knowledge workspace.")
 config_app = typer.Typer(no_args_is_help=True)
 app.add_typer(config_app, name="config")
+source_app = typer.Typer(no_args_is_help=True)
+app.add_typer(source_app, name="source")
 ConfigOption = Annotated[Path, typer.Option("--config", "-c", help="Path to lodestone.toml.")]
 
 
@@ -84,11 +93,16 @@ def doctor(config: ConfigOption = Path("lodestone.toml")) -> None:
 
 
 @app.command()
-def sync(config: ConfigOption = Path("lodestone.toml")) -> None:
-    """Sync configured md/txt/rst files, one document per file (hash guarded)."""
+def sync(
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+    source: Annotated[list[str] | None, typer.Option()] = None,
+    prune: Annotated[bool, typer.Option()] = False,
+) -> None:
+    """Sync structural document/code records; optionally purge missing files."""
     cfg = configuration(config)
     try:
-        report = sync_workspace(cfg)
+        report = sync_workspace(cfg, sources=source, project=project, prune=prune)
     except ValueError as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
         raise typer.Exit(2) from None
@@ -102,6 +116,7 @@ def sync(config: ConfigOption = Path("lodestone.toml")) -> None:
 def search(
     query: Annotated[str, typer.Argument(help="Words, quoted phrases or trailing prefix *. ")],
     config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
     lane: Annotated[LaneName, typer.Option(help="Select one lexical lane.")] = "fts_raw",
     source: Annotated[list[str] | None, typer.Option(help="Source name; repeatable.")] = None,
     kind: Annotated[list[str] | None, typer.Option(help="Record kind; repeatable.")] = None,
@@ -111,7 +126,12 @@ def search(
     """Search a single lexical lane, with source/kind filters applied in SQL."""
     cfg = configuration(config)
     try:
-        hits = search_workspace(cfg, query, lane=lane, sources=source, kinds=kind, limit=limit)
+        hits = search_workspace(
+            cfg, query, project=project, lane=lane, sources=source, kinds=kind, limit=limit
+        )
+    except ValueError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
     except (OSError, sqlite3.Error, StorageError) as exc:
         typer.echo(f"Search error: {exc}", err=True)
         raise typer.Exit(1) from None
@@ -123,3 +143,90 @@ def search(
         for rank, hit in enumerate(hits, start=1):
             typer.echo(f"{rank}. {hit.source}/{hit.ext_id} [{hit.kind}] ({lane}, {hit.score:.6f})")
             typer.echo(f"   {hit.snippet}")
+
+
+@source_app.command("add")
+def source_add(
+    name: Annotated[str, typer.Argument()],
+    path: Annotated[Path, typer.Option("--path")],
+    kind: Annotated[Literal["files", "threads"], typer.Option()] = "files",
+    include: Annotated[list[str] | None, typer.Option()] = None,
+    exclude: Annotated[list[str] | None, typer.Option()] = None,
+    max_file_bytes: Annotated[int, typer.Option(min=1)] = 1024 * 1024,
+    project: Annotated[str | None, typer.Option()] = None,
+    config: ConfigOption = Path("lodestone.toml"),
+) -> None:
+    """Register a file source and include it in the selected project."""
+    configuration(config)
+    try:
+        from lodestone.connectors.files import validate_patterns
+
+        validate_patterns((include or []) + (exclude or []))
+        if kind == "files" and not path.is_dir():
+            raise ValueError("files source path must be a directory")
+        if kind == "threads" and not path.is_file():
+            raise ValueError("threads source path must be a file")
+        try:
+            relative = Path(os.path.relpath(path.resolve(), config.resolve().parent))
+        except ValueError:
+            relative = path.resolve()
+        source = Source(
+            name=name,
+            kind=kind,
+            path=relative,
+            include=include or [],
+            exclude=exclude or [],
+            max_file_bytes=max_file_bytes,
+        )
+        update_source(config, name, source=source, project=project)
+    except ValueError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
+    except (OSError, sqlite3.Error, StorageError) as exc:
+        typer.echo(f"Source error: {exc}", err=True)
+        raise typer.Exit(1) from None
+    typer.echo(f"Added source: {name}")
+
+
+@source_app.command("list")
+def sources_list(
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+) -> None:
+    """List sources in the selected project as JSON."""
+    cfg = configuration(config)
+    try:
+        typer.echo(json.dumps(source_list(cfg, project)))
+    except ValueError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
+
+
+@source_app.command("remove")
+def source_remove(
+    name: Annotated[str, typer.Argument()],
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+) -> None:
+    """Remove a source, its memberships and all indexed records and derived data."""
+    configuration(config)
+    try:
+        update_source(config, name, project=project)
+    except ValueError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
+    except (OSError, sqlite3.Error, StorageError) as exc:
+        typer.echo(f"Source error: {exc}", err=True)
+        raise typer.Exit(1) from None
+    typer.echo(f"Removed source: {name}")
+
+
+@source_app.command("sync")
+def source_sync(
+    name: Annotated[str | None, typer.Argument()] = None,
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+    prune: Annotated[bool, typer.Option()] = False,
+) -> None:
+    """Sync one source, or all sources in the selected project."""
+    sync(config=config, project=project, source=[name] if name is not None else None, prune=prune)

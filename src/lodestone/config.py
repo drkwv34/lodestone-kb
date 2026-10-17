@@ -3,13 +3,23 @@
 
 from __future__ import annotations
 
+import os
 import re
 import tomllib
 from datetime import date
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    SecretStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 PositiveInt = Annotated[int, Field(gt=0)]
 NonNegative = Annotated[float, Field(ge=0)]
@@ -33,6 +43,13 @@ class Prices(Model):
 
 
 class Endpoint(Model):
+    def secret(self, component: Literal["llm", "embed"]) -> SecretStr | None:
+        """Resolve secrets at use time; overrides never enter serialised configuration."""
+        value = os.environ.get(f"LODESTONE_{component.upper()}_API_KEY")
+        if value is None:
+            value = os.environ.get(self.api_key_env) if self.api_key_env else None
+        return SecretStr(value) if value is not None else None
+
     base_url: HttpUrl
     api_key_env: str = ""
 
@@ -72,6 +89,12 @@ class Embed(Endpoint):
 
 
 class Chunks(Model):
+    @model_validator(mode="after")
+    def ordered_limits(self) -> Self:
+        if self.target_tokens > self.max_tokens:
+            raise ValueError("target_tokens must not exceed max_tokens")
+        return self
+
     target_tokens: PositiveInt = 400
     max_tokens: PositiveInt = 800
     chars_per_token: PositiveInt = 4
@@ -172,6 +195,41 @@ class Config(Model):
     sources: list[Source] = Field(default_factory=list)
     projects: list[Project] = Field(default_factory=lambda: [Project(name="default")])
 
+    @model_validator(mode="after")
+    def implicit_project(self) -> Self:
+        if "projects" not in self.model_fields_set:
+            self.projects = [
+                Project(name="default", sources=[source.name for source in self.sources])
+            ]
+        return self
+
+    def validate_registry(self) -> None:
+        names = [source.name for source in self.sources]
+        projects = [project.name for project in self.projects]
+        if len(names) != len(set(names)):
+            raise ValueError("source names must be unique")
+        if len(projects) != len(set(projects)):
+            raise ValueError("project names must be unique")
+        if self.workspace.default_project not in projects or "default" not in projects:
+            raise ValueError("projects must include default and workspace.default_project")
+        for project in self.projects:
+            if len(project.sources) != len(set(project.sources)) or set(project.sources) - set(
+                names
+            ):
+                raise ValueError(f"projects.{project.name}.sources: duplicate or unknown source")
+
+    def scoped_sources(
+        self, project: str | None = None, sources: list[str] | None = None
+    ) -> list[str]:
+        self.validate_registry()
+        selected = project if project is not None else self.workspace.default_project
+        scope = next((item.sources for item in self.projects if item.name == selected), None)
+        if scope is None:
+            raise ValueError(f"unknown project: {selected}")
+        if sources is not None and set(sources) - {source.name for source in self.sources}:
+            raise ValueError("unknown source")
+        return [name for name in scope if sources is None or name in sources]
+
     def resolve_paths(self, directory: Path) -> Self:
         self.workspace.db_path = (directory / self.workspace.db_path).resolve()
         for source in self.sources:
@@ -194,7 +252,9 @@ def load_config(path: Path) -> Config:
     try:
         with path.open("rb") as stream:
             data = tomllib.load(stream)
-        return Config.model_validate(data).resolve_paths(path.resolve().parent)
+        config = Config.model_validate(data)
+        config.validate_registry()
+        return config.resolve_paths(path.resolve().parent)
     except ValidationError as exc:
         # Pydantic messages may include user input; report paths and stable error types only.
         details = "; ".join(
@@ -204,6 +264,8 @@ def load_config(path: Path) -> Config:
         raise ConfigError(details) from None
     except tomllib.TOMLDecodeError:
         raise ConfigError("Invalid TOML; check syntax in configuration file") from None
+    except ValueError as exc:
+        raise ConfigError(str(exc)) from None
     except OSError:
         raise ConfigError(f"Cannot read configuration: {path}") from None
 

@@ -1,0 +1,9 @@
+[
+  {"title": "Manual", "text": "Preface.\n\n"},
+  {"title": "Guide", "text": "# Guide\nWelcome.\n\n"},
+  {"title": "Guide > Install", "text": "## Install\nFirst paragraph.\n\n"},
+  {"title": "Guide > Install > Linux", "text": "### Linux\n```sh\n# stays inside the fence\ninstall package\n```\n\nLinux notes.\n\n"},
+  {"title": "Guide > Usage", "text": "## Usage\nRun it.\n\n"},
+  {"title": "Reference", "text": "Reference\n=========\nDetails.\n\n"},
+  {"title": "Reference > Options", "text": "Options\n-------\nFlags.\n"}
+]

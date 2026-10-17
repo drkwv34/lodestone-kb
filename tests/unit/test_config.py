@@ -97,3 +97,50 @@ def test_fr_005_secret_redaction_preview(tmp_path: Path, monkeypatch: pytest.Mon
         "items": [{"AccessToken": "[REDACTED]", "name": "kept"}],
         "secret": "[REDACTED]",
     }
+
+
+def test_fr_005_runtime_secret_overrides_redaction_and_no_persistence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "lodestone.toml"
+    raw = '[llm]\napi_key_env="CUSTOM_KEY"\n[embed]\napi_key_env="EMBED_KEY"\n'
+    path.write_text(raw)
+    monkeypatch.setenv("CUSTOM_KEY", "configured-value")
+    monkeypatch.setenv("EMBED_KEY", "embedding-value")
+    config = load_config(path)
+    assert config.llm.secret("llm").get_secret_value() == "configured-value"
+    assert config.embed.secret("embed").get_secret_value() == "embedding-value"
+    monkeypatch.setenv("LODESTONE_LLM_API_KEY", "override-value")
+    monkeypatch.setenv("LODESTONE_EMBED_API_KEY", "embedding-override")
+    assert config.llm.secret("llm").get_secret_value() == "override-value"
+    assert config.embed.secret("embed").get_secret_value() == "embedding-override"
+    assert "override-value" not in repr(config.llm.secret("llm"))
+    result = runner.invoke(app, ["config", "show", "--config", str(path)])
+    assert result.exit_code == 0, result.output
+    for secret in ("configured-value", "embedding-value", "override-value", "embedding-override"):
+        assert secret not in result.output
+        assert secret not in config.model_dump_json()
+    assert path.read_text() == raw
+    monkeypatch.delenv("LODESTONE_EMBED_API_KEY")
+    monkeypatch.delenv("EMBED_KEY")
+    assert config.embed.secret("embed") is None
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '[[projects]]\nname="missing-default"',
+        '[[projects]]\nname="default"\nsources=["unknown"]',
+        '[[projects]]\nname="default"\n[[projects]]\nname="default"',
+        '[workspace]\ndefault_project="absent"',
+        '[[sources]]\nname="a"\nkind="files"\npath="."\n'
+        '[[sources]]\nname="a"\nkind="files"\npath="."',
+    ],
+)
+def test_fr_003_project_registry_validation(tmp_path: Path, content: str) -> None:
+    path = tmp_path / "lodestone.toml"
+    path.write_text(content)
+    with pytest.raises(ConfigError):
+        load_config(path)
+    result = runner.invoke(app, ["config", "show", "--config", str(path)])
+    assert result.exit_code == 2

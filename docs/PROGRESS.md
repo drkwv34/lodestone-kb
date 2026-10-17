@@ -1,9 +1,11 @@
 # Project progress
 
-| Day | Date (America/Guayaquil) | PR | CI URL | Requirement IDs | Status / deviations |
+| Feature | Date (America/Guayaquil) | PR | CI URL | Requirement IDs | Status / deviations |
 |---|---|---|---|---|---|---|
 | 1 | 2026-10-17 | [#1 — merged](https://github.com/drkwv34/lodestone-kb/pull/1) | [success on dbdea77](https://github.com/drkwv34/lodestone-kb/actions/runs/39058358316) | FR-001, FR-002, FR-082, FR-080 partial; NFR-011, NFR-012 Day 1 gates, NFR-017; FR-005 preview | Merged locally with --no-ff as Christian and pushed main at 443fde2. Real OpenSpec archived as 2026-10-17-day-1-scaffold; strict validation: 2 passed, 0 failed. Archive/evidence committed directly on main at 03432c7 and pushed; annotated day-1 tag published on merge commit 443fde2. Day 1 complete. Local tests: 28 passed, 98.22% coverage. |
 | 2 | 2026-10-17 | [#2 — merged](https://github.com/drkwv34/lodestone-kb/pull/2) | [success on final PR head 927fb4a](https://github.com/drkwv34/lodestone-kb/actions/runs/39065777458) | FR-010 md/txt/rst, FR-014 hash skeleton, FR-030, FR-032 infrastructure + rare lane, FR-041 source/kind | Merged with --no-ff and pushed main at c8f34ae. Archived as 2026-10-17-day-2-lexical-search directly on main; strict OpenSpec validation: 3 passed, 0 failed. Final PR-head E1–E5 and post-merge outputs in day-02.md. All nine PR CI jobs green; 52 tests, 96.15% coverage. Annotated day-2 tag published on merge commit c8f34ae, not the later archive/evidence commits. Day 2 complete. |
+
+| Markdown/code chunkers and source management | 2026-10-17 | [#3 — open](https://github.com/drkwv34/lodestone-kb/pull/3) | [success on 58c11a1](https://github.com/drkwv34/lodestone-kb/actions/runs/39070348557) | FR-015, FR-016, FR-014, FR-003, FR-004, FR-005, FR-010 code kinds | Implemented structural parent/child records, incremental deletion/prune, source CLI and project scopes. Local validation: 83 tests, 96.88% coverage; strict typing, lint, import contracts, module limit and package smoke passed (outputs in [evidence](evidence/chunkers-sources.md)). All nine CI jobs passed on the recorded head; final-head output is pasted in the PR. OpenSpec remains active pending merge and archive. |
 
 ## Delivery record
 

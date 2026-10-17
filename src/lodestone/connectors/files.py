@@ -15,7 +15,8 @@ from pathspec import GitIgnoreSpec
 from lodestone.config import Source
 
 LOGGER = logging.getLogger(__name__)
-SUPPORTED = {".md", ".txt", ".rst"}
+CODE_KINDS = {"py", "js", "ts", "go", "java", "c", "cpp", "rs"}
+SUPPORTED = {".md", ".txt", ".rst"} | {"." + kind for kind in CODE_KINDS}
 MAX_IGNORE_BYTES = 1024 * 1024
 
 
@@ -55,6 +56,11 @@ def validate_patterns(patterns: list[str]) -> None:
             raise ValueError("include/exclude patterns must stay inside the source root")
 
 
+def discovery_error(error: OSError) -> None:
+    """Abort incomplete directory scans before any missing-file reconciliation."""
+    raise error
+
+
 class FilesConnector:
     def __init__(self) -> None:
         self.skipped: list[Skip] = []
@@ -72,7 +78,7 @@ class FilesConnector:
         include = GitIgnoreSpec.from_lines(cfg.include)
         exclude = GitIgnoreSpec.from_lines(cfg.exclude)
         rules: dict[Path, list[tuple[Path, GitIgnoreSpec]]] = {}
-        for directory, dirs, files in os.walk(root, followlinks=False):
+        for directory, dirs, files in os.walk(root, followlinks=False, onerror=discovery_error):
             current = Path(directory)
             inherited = rules.get(current.parent, [])
             local = list(inherited)
@@ -111,7 +117,7 @@ class FilesConnector:
                     self.skip(relative, "not included")
                     continue
                 if path.suffix.lower() not in SUPPORTED:
-                    self.skip(relative, "unsupported extension (Day 2: md/txt/rst)")
+                    self.skip(relative, "unsupported extension")
                     continue
                 item = self.read(root, relative, cfg.max_file_bytes)
                 if item is not None:
