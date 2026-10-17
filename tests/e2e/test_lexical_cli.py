@@ -25,7 +25,9 @@ def command(directory: Path, *args: str) -> subprocess.CompletedProcess[str]:
 def test_fr_010_fr_030_fr_041_sync_search_smoke(tmp_path: Path) -> None:
     shutil.copytree(CORPUS, tmp_path / "corpus")
     assert command(tmp_path, "init").returncode == 0
-    with (tmp_path / "lodestone.toml").open("a") as stream:
+    config_path = tmp_path / "lodestone.toml"
+    config_path.write_text(config_path.read_text().replace("sources = []", 'sources = ["wiki"]'))
+    with config_path.open("a") as stream:
         stream.write(
             '\n[retrieval]\nrare_df_ratio=0.3\n[[sources]]\nname="wiki"\nkind="files"\n'
             'path="corpus"\nexclude=["drafts/**"]\n'
@@ -35,7 +37,7 @@ def test_fr_010_fr_030_fr_041_sync_search_smoke(tmp_path: Path) -> None:
     assert json.loads(first.stdout)["processed"] == 4
     second = command(tmp_path, "sync")
     assert json.loads(second.stdout)["processed"] == 0
-    human = command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT")
+    human = command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--kind", "doc")
     assert human.returncode == 0, human.stderr
     assert "1. wiki/manifest.md [doc] (fts_raw," in human.stdout
     result = command(
@@ -48,14 +50,18 @@ def test_fr_010_fr_030_fr_041_sync_search_smoke(tmp_path: Path) -> None:
     assert output["hits"][0]["source"] == "wiki"
     assert output["hits"][0]["kind"] == "doc"
     rare = command(
-        tmp_path, "search", "ERR_MANIFEST_TIMEOUT manifest", "--lane", "fts_rare", "--json"
+        tmp_path,
+        "search",
+        "ERR_MANIFEST_TIMEOUT manifest",
+        "--lane",
+        "fts_rare",
+        "--kind",
+        "doc",
+        "--json",
     )
     assert rare.returncode == 0, rare.stderr
     assert [hit["ext_id"] for hit in json.loads(rare.stdout)["hits"]] == ["manifest.md"]
-    assert (
-        command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--source", "other").stdout.strip()
-        == "No matches."
-    )
+    assert command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--source", "other").returncode == 2
     assert command(tmp_path, "search", "test", "--lane", "fts_card").returncode == 2
 
 

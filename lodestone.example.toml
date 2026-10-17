@@ -11,7 +11,7 @@ max_tokens = 800
 chars_per_token = 4
 [[projects]]
 name = "default"
-sources = []
+sources = ["wiki"]
 
 [[sources]]
 name = "wiki"

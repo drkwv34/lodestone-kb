@@ -13,8 +13,11 @@ def main() -> None:
             subprocess.run(["lodestone", *args], cwd=root, check=True)  # noqa: S603,S607
         (root / "docs").mkdir()
         (root / "docs/manifest.md").write_text("ERR_MANIFEST_TIMEOUT", encoding="utf-8")
-        with (root / "lodestone.toml").open("a", encoding="utf-8") as stream:
-            stream.write('\n[[sources]]\nname="wiki"\nkind="files"\npath="docs"\n')
+        subprocess.run(
+            ["lodestone", "source", "add", "wiki", "--path", "docs"],  # noqa: S607
+            cwd=root,
+            check=True,
+        )
         subprocess.run(["lodestone", "sync"], cwd=root, check=True)  # noqa: S607
         result = subprocess.run(
             ["lodestone", "search", "ERR_MANIFEST_TIMEOUT", "--json"],  # noqa: S607
