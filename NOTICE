@@ -1,0 +1,8 @@
+Lodestone
+Copyright 2026 Christian Agila
+
+Licensed under the Apache License, Version 2.0.
+
+Inspired by Cerebras' "How we built our knowledge base" (2026).
+Lodestone is an independent project and is not affiliated with Cerebras.
+Third-party dependencies retain their own licenses; CI generates a license report.

@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: Apache-2.0
+name: ci
+on:
+  push:
+    branches: [main, day-1-scaffold]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lint-type:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e '.[dev,vec]'
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy --strict src
+      - run: lint-imports --config importlinter.ini
+      - run: python scripts/check_modules.py
+  test:
+    needs: lint-type
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: '3.11'}
+          - {os: ubuntu-latest, python: '3.12'}
+          - {os: ubuntu-latest, python: '3.13'}
+          - {os: macos-latest, python: '3.12'}
+          - {os: windows-latest, python: '3.12', smoke: true}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '${{ matrix.python }}'
+      - run: pip install -e '.[dev,vec]'
+      - if: matrix.smoke != true
+        run: pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=70
+      - if: matrix.smoke == true
+        run: pytest tests/e2e -k smoke
+  openspec:
+    runs-on: ubuntu-latest
+    env:
+      OPENSPEC_TELEMETRY: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm i -g @fission-ai/openspec@latest
+      - run: openspec --version
+      - run: openspec validate --all --strict
+  licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e '.[dev,vec]'
+      - run: mkdir -p work
+      - run: pip-licenses --format=markdown --partial-match --fail-on='GPL;AGPL' --output-file=work/licenses.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-licenses
+          path: work/licenses.md
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e '.[dev]'
+      - run: python -m build
+      - run: pip install --force-reinstall --no-deps dist/*.whl
+      - run: python scripts/smoke_wheel.py
