@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+schema_version = 1
+[workspace]
+db_path = ".lodestone/index.db"
+default_project = "default"
+[embed]
+provider = "none"
+[chunks]
+target_tokens = 400
+max_tokens = 800
+chars_per_token = 4
+[[projects]]
+name = "default"
+sources = []

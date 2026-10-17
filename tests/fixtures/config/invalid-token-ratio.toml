@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: Apache-2.0
+[chunks]
+chars_per_token = 0
