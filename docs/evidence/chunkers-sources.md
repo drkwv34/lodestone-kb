@@ -1,6 +1,6 @@
 # Markdown/code chunking and source management evidence
 
-Base: latest `main` at `0a949d299d7ca0034b00678f0e205a4894c75b05`.
+Feature base: `main` at `0a949d299d7ca0034b00678f0e205a4894c75b05`.
 
 ## OpenSpec
 
@@ -16,11 +16,11 @@ Change 'add-chunkers-and-sources' is valid
 
 ```text
 $ openspec list
-Changes:
-  add-chunkers-and-sources     ✓ Complete    just now
+No active changes found.
 ```
 
-The change remains active until merge; archive is deferred to the requested follow-up.
+Archived as `2026-10-17-add-chunkers-and-sources` after merge.
+The new capability Purpose describes structural chunking, synchronization and source boundaries.
 
 ## Requirement checklist
 
@@ -150,26 +150,26 @@ $ lodestone sync
 
 ## Authorship snapshot
 
-Snapshot through `58c11a1`; the PR description will include the final head range.
+Main snapshot through merge `efa152e049a01482f1196076b560fbe562195bb1`; the archive commit follows this snapshot.
 
 ```text
-$ git log day-2..HEAD --format='%h %an <%ae> | %cn <%ce>'
+$ git log --format='%h %an <%ae> | %cn <%ce>' 0a949d2..HEAD
+efa152e Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+0503198 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 58c11a1 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 ca52caa Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 239c9bb Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 391bf5a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 744890b Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 63d1abc Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
-0a949d2 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
-38c7d92 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 ```
 
 ```text
-$ git log day-2..HEAD --format=%B | grep -Eic 'co-authored-by|bot'
+$ git log 0a949d2..HEAD --format=%B | grep -ci 'co-authored-by'
 0
 ```
 
-The range begins at the existing tag; older history is retained.
+The range begins at the feature base commit; earlier history is retained.
 
 ## CI
 
@@ -177,15 +177,15 @@ PR: https://github.com/drkwv34/lodestone-kb/pull/3
 
 ```text
 GitHub Actions API output (selected fields):
-id: 39070348557
-head_sha: 58c11a198486d221592b01a60b8110548d8a402c
-html_url: https://github.com/drkwv34/lodestone-kb/actions/runs/39070348557
+id: 39070547915
+head_sha: 0503198f36db2208b685c4a2c8cef09a2cecf0e0
+html_url: https://github.com/drkwv34/lodestone-kb/actions/runs/39070547915
 status: completed
 conclusion: success
 
 [
   {
-    "name": "openspec",
+    "name": "lint-type",
     "status": "completed",
     "conclusion": "success"
   },
@@ -195,12 +195,17 @@ conclusion: success
     "conclusion": "success"
   },
   {
+    "name": "openspec",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
     "name": "build",
     "status": "completed",
     "conclusion": "success"
   },
   {
-    "name": "lint-type",
+    "name": "test (macos-latest, 3.12)",
     "status": "completed",
     "conclusion": "success"
   },
@@ -210,12 +215,12 @@ conclusion: success
     "conclusion": "success"
   },
   {
-    "name": "test (ubuntu-latest, 3.13)",
+    "name": "test (ubuntu-latest, 3.11)",
     "status": "completed",
     "conclusion": "success"
   },
   {
-    "name": "test (ubuntu-latest, 3.11)",
+    "name": "test (ubuntu-latest, 3.13)",
     "status": "completed",
     "conclusion": "success"
   },
@@ -223,15 +228,107 @@ conclusion: success
     "name": "test (ubuntu-latest, 3.12)",
     "status": "completed",
     "conclusion": "success"
-  },
-  {
-    "name": "test (macos-latest, 3.12)",
-    "status": "completed",
-    "conclusion": "success"
   }
 ]
 ```
 
-This records the verified PR head `58c11a1`. Updating tracked evidence changes
-HEAD; final-head CI and the complete authorship range are pasted in the PR
-description. Merge and subsequent OpenSpec archive remain deferred.
+## Merge and archive
+
+Merge commit: `efa152e049a01482f1196076b560fbe562195bb1`. Both author and committer are Christian Agila
+<87576768+drkwv34@users.noreply.github.com>.
+
+```text
+$ git merge --no-ff feat/chunkers-sources -m 'Merge feat/chunkers-sources: structural chunkers, incremental sync, source management'
+Merge made by the 'ort' strategy.
+ README.md                                          |  92 +++++---
+ docs/PROGRESS.md                                   |   4 +-
+ docs/decisions/0003-chunkers-and-sources.md        |  42 ++++
+ docs/evidence/chunkers-sources.md                  | 237 +++++++++++++++++++++
+ importlinter.ini                                   |   3 +-
+ lodestone.example.toml                             |   2 +-
+ .../add-chunkers-and-sources/.openspec.yaml        |   2 +
+ .../changes/add-chunkers-and-sources/proposal.md   |  22 ++
+ .../specs/chunkers-sources/spec.md                 |  43 ++++
+ openspec/changes/add-chunkers-and-sources/tasks.md |  16 ++
+ scripts/smoke_wheel.py                             |   7 +-
+ src/lodestone/chunking/__init__.py                 |  43 ++++
+ src/lodestone/chunking/code.py                     | 155 ++++++++++++++
+ src/lodestone/chunking/markdown.py                 |  71 ++++++
+ src/lodestone/cli.py                               | 121 ++++++++++-
+ src/lodestone/config.py                            |  66 +++++-
+ src/lodestone/config_io.py                         |  64 ++++++
+ src/lodestone/connectors/files.py                  |  12 +-
+ src/lodestone/ingest/pipeline.py                   | 153 ++++++++++---
+ src/lodestone/storage/registry.py                  |  57 +++++
+ src/lodestone/workspace.py                         |  50 ++++-
+ tests/e2e/test_lexical_cli.py                      |  20 +-
+ tests/e2e/test_sources.py                          | 230 ++++++++++++++++++++
+ tests/fixtures/chunking/figure.code                |  14 ++
+ tests/fixtures/chunking/figure.json                |   7 +
+ tests/fixtures/chunking/headings.json              |   9 +
+ tests/fixtures/chunking/headings.md                |  26 +++
+ tests/integration/test_ingest.py                   | 161 +++++++++++++-
+ tests/integration/test_projects.py                 |  89 ++++++++
+ tests/unit/test_chunkers.py                        | 141 ++++++++++++
+ tests/unit/test_config.py                          |  47 ++++
+ tests/unit/test_files.py                           |  21 +-
+ 32 files changed, 1925 insertions(+), 102 deletions(-)
+ create mode 100644 docs/decisions/0003-chunkers-and-sources.md
+ create mode 100644 docs/evidence/chunkers-sources.md
+ create mode 100644 openspec/changes/add-chunkers-and-sources/.openspec.yaml
+ create mode 100644 openspec/changes/add-chunkers-and-sources/proposal.md
+ create mode 100644 openspec/changes/add-chunkers-and-sources/specs/chunkers-sources/spec.md
+ create mode 100644 openspec/changes/add-chunkers-and-sources/tasks.md
+ create mode 100644 src/lodestone/chunking/__init__.py
+ create mode 100644 src/lodestone/chunking/code.py
+ create mode 100644 src/lodestone/chunking/markdown.py
+ create mode 100644 src/lodestone/config_io.py
+ create mode 100644 src/lodestone/storage/registry.py
+ create mode 100644 tests/e2e/test_sources.py
+ create mode 100644 tests/fixtures/chunking/figure.code
+ create mode 100644 tests/fixtures/chunking/figure.json
+ create mode 100644 tests/fixtures/chunking/headings.json
+ create mode 100644 tests/fixtures/chunking/headings.md
+ create mode 100644 tests/integration/test_projects.py
+ create mode 100644 tests/unit/test_chunkers.py
+```
+
+```text
+$ git rev-parse HEAD
+efa152e049a01482f1196076b560fbe562195bb1
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb.git
+   0a949d2..efa152e  main -> main
+```
+
+```text
+$ openspec archive add-chunkers-and-sources --yes
+Task status: ✓ Complete
+
+Specs to update:
+  chunkers-sources: create
+Applying changes to openspec/specs/chunkers-sources/spec.md:
+  + 6 added
+Totals: + 6, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'add-chunkers-and-sources' archived as '2026-10-17-add-chunkers-and-sources'.
+```
+
+The archive created a placeholder Purpose; the new capability now has a feature-specific Purpose.
+
+```text
+$ openspec validate --all --strict
+✓ spec/chunkers-sources
+✓ spec/lexical-search
+✓ spec/repository-gates
+✓ spec/workspace-foundation
+Totals: 4 passed, 0 failed (4 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
