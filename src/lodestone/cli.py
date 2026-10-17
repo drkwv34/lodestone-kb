@@ -1,19 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Day 1 commands. All operations run locally and require no provider credentials."""
+"""Local workspace and lexical commands; no provider credentials required."""
 
 from __future__ import annotations
 
 import json
 import platform
 import sqlite3
+from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from lodestone.config import Config, ConfigError, load_config, redact
+from lodestone.lanes.fts import LaneName
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, probe_fts5
-from lodestone.workspace import initialise
+from lodestone.workspace import initialise, search_workspace, sync_workspace
 
 app = typer.Typer(no_args_is_help=True, help="Lodestone local knowledge workspace.")
 config_app = typer.Typer(no_args_is_help=True)
@@ -31,7 +33,7 @@ def configuration(path: Path) -> Config:
 
 @app.command()
 def init(path: Annotated[Path, typer.Argument()] = Path(".")) -> None:
-    """Create a configuration and schema v1 database, preserving existing data."""
+    """Create a configuration and current-schema database, preserving existing data."""
     try:
         already = initialise(path)
     except ConfigError as exc:
@@ -41,7 +43,9 @@ def init(path: Annotated[Path, typer.Argument()] = Path(".")) -> None:
         typer.echo(f"Initialisation error: {exc}", err=True)
         raise typer.Exit(1) from None
     typer.echo(
-        "already initialised" if already else "Initialised lodestone.toml and database schema 1"
+        "already initialised"
+        if already
+        else f"Initialised lodestone.toml and database schema {SCHEMA_VERSION}"
     )
 
 
@@ -77,3 +81,45 @@ def doctor(config: ConfigOption = Path("lodestone.toml")) -> None:
     if errors:
         raise typer.Exit(1)
     typer.echo("Doctor: OK (local Day 1 probes)")
+
+
+@app.command()
+def sync(config: ConfigOption = Path("lodestone.toml")) -> None:
+    """Sync configured md/txt/rst files, one document per file (hash guarded)."""
+    cfg = configuration(config)
+    try:
+        report = sync_workspace(cfg)
+    except ValueError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
+    except (OSError, sqlite3.Error, StorageError) as exc:
+        typer.echo(f"Sync error: {exc}", err=True)
+        raise typer.Exit(1) from None
+    typer.echo(json.dumps(asdict(report)))
+
+
+@app.command()
+def search(
+    query: Annotated[str, typer.Argument(help="Words, quoted phrases or trailing prefix *. ")],
+    config: ConfigOption = Path("lodestone.toml"),
+    lane: Annotated[LaneName, typer.Option(help="Select one lexical lane.")] = "fts_raw",
+    source: Annotated[list[str] | None, typer.Option(help="Source name; repeatable.")] = None,
+    kind: Annotated[list[str] | None, typer.Option(help="Record kind; repeatable.")] = None,
+    limit: Annotated[int, typer.Option(min=1)] = 10,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Search a single lexical lane, with source/kind filters applied in SQL."""
+    cfg = configuration(config)
+    try:
+        hits = search_workspace(cfg, query, lane=lane, sources=source, kinds=kind, limit=limit)
+    except (OSError, sqlite3.Error, StorageError) as exc:
+        typer.echo(f"Search error: {exc}", err=True)
+        raise typer.Exit(1) from None
+    if json_output:
+        typer.echo(json.dumps({"lane": lane, "hits": [asdict(hit) for hit in hits]}))
+    elif not hits:
+        typer.echo("No matches.")
+    else:
+        for rank, hit in enumerate(hits, start=1):
+            typer.echo(f"{rank}. {hit.source}/{hit.ext_id} [{hit.kind}] ({lane}, {hit.score:.6f})")
+            typer.echo(f"   {hit.snippet}")

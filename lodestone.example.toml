@@ -12,3 +12,11 @@ chars_per_token = 4
 [[projects]]
 name = "default"
 sources = []
+
+[[sources]]
+name = "wiki"
+kind = "files"
+path = "tests/fixtures/corpus"
+include = ["**/*.md", "**/*.txt", "**/*.rst"]
+exclude = ["drafts/**"]
+max_file_bytes = 1048576
