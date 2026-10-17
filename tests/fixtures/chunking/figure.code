@@ -1,0 +1,14 @@
+class Processor:
+    def run(self, items):
+        if items:
+            result = transform(items)
+            save_result(result)
+            report_result(result)
+        for item in items:
+            check_item(item)
+            process_item(item)
+            finish_item(item)
+        return items
+
+    def stop(self):
+        return None

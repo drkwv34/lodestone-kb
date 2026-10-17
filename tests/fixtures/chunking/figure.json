@@ -1,0 +1,7 @@
+[
+  {"title":"processor > Processor", "text":"class Processor:\n"},
+  {"title":"processor > Processor > run", "text":"    def run(self, items):\n"},
+  {"title":"processor > Processor > run > if", "text":"        if items:\n            result = transform(items)\n            save_result(result)\n            report_result(result)\n"},
+  {"title":"processor > Processor > run > for", "text":"        for item in items:\n            check_item(item)\n            process_item(item)\n            finish_item(item)\n        return items\n\n"},
+  {"title":"processor > Processor > stop", "text":"    def stop(self):\n        return None\n"}
+]
