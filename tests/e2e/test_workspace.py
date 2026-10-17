@@ -4,6 +4,8 @@ import sqlite3
 import subprocess
 from pathlib import Path
 
+from lodestone.storage.db import SCHEMA_VERSION
+
 
 def command(directory: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(  # noqa: S603
@@ -23,7 +25,7 @@ def test_fr_001_init_idempotence_smoke(tmp_path: Path) -> None:
         stream.write("\n# user comment preserved\n")
     before = config.read_bytes()
     with sqlite3.connect(tmp_path / ".lodestone/index.db") as connection:
-        assert connection.execute("PRAGMA user_version").fetchone() == (1,)
+        assert connection.execute("PRAGMA user_version").fetchone() == (SCHEMA_VERSION,)
         connection.execute("INSERT INTO meta VALUES ('marker', 'preserved')")
     second = command(tmp_path, "init")
     assert second.returncode == 0, second.stderr
@@ -39,7 +41,13 @@ def test_fr_080_doctor_smoke(tmp_path: Path) -> None:
     assert command(tmp_path, "init").returncode == 0
     result = command(tmp_path, "doctor")
     assert result.returncode == 0, result.stderr
-    for expected in ("Python:", "SQLite:", "FTS5: available", "Database schema: 1", "Doctor: OK"):
+    for expected in (
+        "Python:",
+        "SQLite:",
+        "FTS5: available",
+        f"Database schema: {SCHEMA_VERSION}",
+        "Doctor: OK",
+    ):
         assert expected in result.stdout
 
 
