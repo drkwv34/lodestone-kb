@@ -1,0 +1,1 @@
+Hidden nested text must be skipped.

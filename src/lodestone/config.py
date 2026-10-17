@@ -148,6 +148,7 @@ class Source(Model):
     path: Path
     include: list[str] = Field(default_factory=list)
     exclude: list[str] = Field(default_factory=list)
+    max_file_bytes: PositiveInt = 1024 * 1024
     refresh: Literal["manual"] = "manual"
     channel: str | None = None
 
