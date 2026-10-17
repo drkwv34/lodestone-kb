@@ -4,8 +4,9 @@ Scope: FR-010 (md/txt/rst), FR-014 (hash skeleton), FR-030, FR-032
 (infrastructure and requested rare lane), FR-041 (source/kind only).
 Base: latest main `2aa63e92f3052e91a3eb4e2cba60545671d8ac41`, including
 Day 1 archive/evidence commits after the `day-1` merge tag.
-Branch and active OpenSpec change: `day-2-lexical-search`.
-No merge, archive or day-2 tag is authorised in this run.
+Implementation branch and OpenSpec change: `day-2-lexical-search`.
+The original implementation run stopped at the green PR head. The owner authorised
+merge, archive and tagging in the 2026-10-17 follow-up; completion output follows below.
 
 ## E1 — real OpenSpec
 
@@ -402,8 +403,272 @@ legacy rows and adds FTS/statistics triggers. No new runtime dependencies, paid
 APIs, providers, chunks, projects, pruning or fusion were introduced. See decision
 0002 for normalisation, Unicode/FTS parity, gitignore, and IDF threshold details.
 
-The OpenSpec change remains active. Merge, direct-on-main archive and tag are
-reserved for the owner's follow-up. Evidence commits follow the run whose output
-they embed; after the final evidence push, the PR description also receives the
-actual final-head CI output. This preserves history without claiming that an
-older run tested a newer evidence commit.
+The following completion record supersedes the original active-change snapshot.
+The approved final PR-head CI output is copied here without changing that tested
+PR head. Archive and evidence are direct commits on main after the merge.
+
+## Approved final PR-head evidence, copied after merge
+
+## Final PR-head verification — E2 / E3 / E4
+
+The evidence commit is now tested on the exact current PR head. Output below is from the authenticated GitHub connector; the gh CLI is blocked. All nine jobs are successful. This verification was captured before the authorised merge.
+
+```text
+{
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39065777458",
+  "head_sha": "927fb4a9d2f367b30398744298b997b2c5bdc633",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 117493010477,
+      "name": "lint-type",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493010560,
+      "name": "openspec",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493010624,
+      "name": "licenses",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493010649,
+      "name": "build",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493118450,
+      "name": "test (macos-latest, 3.12)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493118455,
+      "name": "test (ubuntu-latest, 3.11)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493118486,
+      "name": "test (windows-latest, 3.12, true)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493118509,
+      "name": "test (ubuntu-latest, 3.13)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117493118511,
+      "name": "test (ubuntu-latest, 3.12)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}
+conclusion: success
+```
+
+Final-head CI pytest output (Linux / Python 3.12):
+
+```text
+2026-10-17T20:14:14.2476209Z TOTAL                                    598     23    96%
+2026-10-17T20:14:14.2476665Z Required test coverage of 70% reached. Total coverage: 96.15%
+2026-10-17T20:14:14.2477011Z 52 passed in 6.54s
+```
+
+```text
+$ git log day-1..HEAD --format='%h %an <%ae> | %cn <%ce>'
+927fb4a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+cc4d23c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+81833d8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+3b3990b Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+f51f3f8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+9e545dc Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+2aa63e9 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+03432c7 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log day-1..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
+```
+
+This final PR-head output was pasted in PR #2 and copied into this post-merge evidence record.
+
+
+## Post-merge completion — 2026-10-17
+
+The owner independently verified PR #2 at `927fb4a` and explicitly authorised
+the merge/archive/tag follow-up. Both merge parents are preserved; no history
+was rewritten. GitHub now reports PR #2 closed and merged at `c8f34aedea0b12a38b378e83fa3457db97037a30`.
+
+```text
+$ git merge --no-ff day-2-lexical-search -m 'Merge day-2-lexical-search: tokenizer, files connector, FTS lanes (Day 2)'
+Merge made by the 'ort' strategy.
+ README.md                                          |  41 ++-
+ docs/PROGRESS.md                                   |   5 +-
+ docs/decisions/0002-day-2-lexical-foundation.md    |  51 +++
+ docs/evidence/day-02.md                            | 409 +++++++++++++++++++++
+ importlinter.ini                                   |  10 +
+ lodestone.example.toml                             |   8 +
+ .../changes/day-2-lexical-search/.openspec.yaml    |   2 +
+ openspec/changes/day-2-lexical-search/proposal.md  |  21 ++
+ .../specs/lexical-search/spec.md                   |  55 +++
+ openspec/changes/day-2-lexical-search/tasks.md     |  17 +
+ scripts/smoke_wheel.py                             |  18 +-
+ src/lodestone/cli.py                               |  54 ++-
+ src/lodestone/config.py                            |   1 +
+ src/lodestone/connectors/__init__.py               |   2 +
+ src/lodestone/connectors/files.py                  | 164 +++++++++
+ src/lodestone/ingest/__init__.py                   |   2 +
+ src/lodestone/ingest/pipeline.py                   |  99 +++++
+ src/lodestone/lanes/__init__.py                    |   2 +
+ src/lodestone/lanes/fts.py                         | 112 ++++++
+ src/lodestone/storage/db.py                        |   2 +-
+ src/lodestone/storage/migrations/0002_lexical.sql  |  52 +++
+ src/lodestone/storage/terms.py                     |  36 ++
+ src/lodestone/tokenize.py                          |  25 ++
+ src/lodestone/workspace.py                         |  45 ++-
+ tests/conftest.py                                  |  47 +++
+ tests/e2e/test_lexical_cli.py                      |  84 +++++
+ tests/e2e/test_workspace.py                        |  12 +-
+ tests/fixtures/corpus/.gitignore                   |   2 +
+ tests/fixtures/corpus/binary.txt                   | Bin 0 -> 29 bytes
+ tests/fixtures/corpus/chatter.txt                  |   2 +
+ tests/fixtures/corpus/drafts/draft.md              |   1 +
+ tests/fixtures/corpus/guide.rst                    |   3 +
+ tests/fixtures/corpus/ignored.txt                  |   1 +
+ tests/fixtures/corpus/manifest.md                  |   3 +
+ tests/fixtures/corpus/nested/.gitignore            |   2 +
+ tests/fixtures/corpus/nested/hidden.txt            |   1 +
+ tests/fixtures/corpus/nested/keep.txt              |   1 +
+ tests/fixtures/corpus/unsupported.csv              |   1 +
+ tests/integration/test_ingest.py                   |  77 ++++
+ tests/integration/test_lexical.py                  | 151 ++++++++
+ tests/integration/test_migrations.py               |  39 +-
+ tests/unit/test_files.py                           | 121 ++++++
+ tests/unit/test_tokenize.py                        |  21 ++
+ 43 files changed, 1780 insertions(+), 22 deletions(-)
+ create mode 100644 docs/decisions/0002-day-2-lexical-foundation.md
+ create mode 100644 docs/evidence/day-02.md
+ create mode 100644 openspec/changes/day-2-lexical-search/.openspec.yaml
+ create mode 100644 openspec/changes/day-2-lexical-search/proposal.md
+ create mode 100644 openspec/changes/day-2-lexical-search/specs/lexical-search/spec.md
+ create mode 100644 openspec/changes/day-2-lexical-search/tasks.md
+ create mode 100644 src/lodestone/connectors/__init__.py
+ create mode 100644 src/lodestone/connectors/files.py
+ create mode 100644 src/lodestone/ingest/__init__.py
+ create mode 100644 src/lodestone/ingest/pipeline.py
+ create mode 100644 src/lodestone/lanes/__init__.py
+ create mode 100644 src/lodestone/lanes/fts.py
+ create mode 100644 src/lodestone/storage/migrations/0002_lexical.sql
+ create mode 100644 src/lodestone/storage/terms.py
+ create mode 100644 src/lodestone/tokenize.py
+ create mode 100644 tests/conftest.py
+ create mode 100644 tests/e2e/test_lexical_cli.py
+ create mode 100644 tests/fixtures/corpus/.gitignore
+ create mode 100644 tests/fixtures/corpus/binary.txt
+ create mode 100644 tests/fixtures/corpus/chatter.txt
+ create mode 100644 tests/fixtures/corpus/drafts/draft.md
+ create mode 100644 tests/fixtures/corpus/guide.rst
+ create mode 100644 tests/fixtures/corpus/ignored.txt
+ create mode 100644 tests/fixtures/corpus/manifest.md
+ create mode 100644 tests/fixtures/corpus/nested/.gitignore
+ create mode 100644 tests/fixtures/corpus/nested/hidden.txt
+ create mode 100644 tests/fixtures/corpus/nested/keep.txt
+ create mode 100644 tests/fixtures/corpus/unsupported.csv
+ create mode 100644 tests/integration/test_ingest.py
+ create mode 100644 tests/integration/test_lexical.py
+ create mode 100644 tests/unit/test_files.py
+ create mode 100644 tests/unit/test_tokenize.py
+```
+
+```text
+$ git show --format=fuller --no-patch HEAD
+commit c8f34aedea0b12a38b378e83fa3457db97037a30
+Merge: 2aa63e9 927fb4a
+Author:     Christian Agila <87576768+drkwv34@users.noreply.github.com>
+AuthorDate: Sat Oct 17 20:54:44 2026 +0000
+Commit:     Christian Agila <87576768+drkwv34@users.noreply.github.com>
+CommitDate: Sat Oct 17 20:54:44 2026 +0000
+
+    Merge day-2-lexical-search: tokenizer, files connector, FTS lanes (Day 2)
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb.git
+   2aa63e9..c8f34ae  main -> main
+```
+
+```text
+$ openspec archive day-2-lexical-search --yes
+Task status: ✓ Complete
+
+Specs to update:
+  lexical-search: create
+Applying changes to openspec/specs/lexical-search/spec.md:
+  + 5 added
+Totals: + 5, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'day-2-lexical-search' archived as '2026-10-17-day-2-lexical-search'.
+```
+
+The archive CLI generated a placeholder Purpose for the new main spec. Initial
+strict validation rejected that placeholder; it was replaced with the implemented
+capability's purpose, without changing any requirements or checks.
+
+```text
+$ openspec validate --all --strict
+✗ spec/lexical-search
+  ⚠ [WARNING] overview: Purpose section is still a placeholder rather than a Purpose anyone wrote (the sentence `openspec archive` writes for a new capability, or a `TBD`/`TODO` marker left in its place). Replace it with what this capability is for, editing the main spec directly: a `## Purpose` in a delta is read only when the capability is created, so it cannot replace this one.
+✓ spec/repository-gates
+✓ spec/workspace-foundation
+Totals: 2 passed, 1 failed (3 items)
+Details: openspec validate lexical-search --type spec
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/lexical-search
+✓ spec/repository-gates
+✓ spec/workspace-foundation
+Totals: 3 passed, 0 failed (3 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
+
+Authorship snapshot on main at the merge commit, before committing the archive
+and this evidence update (the final delivery log is also pasted in chat):
+
+```text
+$ git log --format='%h %an <%ae> | %cn <%ce>' day-1..HEAD
+c8f34ae Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+927fb4a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+cc4d23c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+81833d8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+3b3990b Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+f51f3f8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+9e545dc Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+2aa63e9 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+03432c7 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log day-1..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
+```
+
+Archive location: `openspec/changes/archive/2026-10-17-day-2-lexical-search/`.
+The `day-2` tag target is the merge commit `c8f34aedea0b12a38b378e83fa3457db97037a30`;
+publication is recorded after the tag push succeeds.
