@@ -32,15 +32,95 @@ Totals: 1 passed, 0 failed (1 items)
 ```text
 $ openspec list
 Changes:
-  day-1-scaffold     11/15 tasks   just now
+  day-1-scaffold     13/15 tasks   just now
 ```
 
 After-archive `openspec validate --all --strict`: PENDING, archive must follow merge.
 
 ## E2 — remote CI and blocker
 
-Remote CI run URL/conclusion: pending PR creation and observation. No remote
-success is claimed. The required gh output is blocked:
+CI checkpoint: https://github.com/drkwv34/lodestone-kb/actions/runs/39058162855
+for head `bd10aff2166e147f64a3af1599f19db2dd7ac956`.
+The GitHub connector returned this actual output (not a gh transcript):
+
+```json
+{
+  "workflow_runs": [
+    {
+      "id": 39058162855,
+      "name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 4,
+      "jobs_url": "https://api.github.com/repos/drkwv34/lodestone-kb/actions/runs/39058162855/jobs",
+      "logs_url": "https://api.github.com/repos/drkwv34/lodestone-kb/actions/runs/39058162855/logs",
+      "workflow_id": 387873939
+    }
+  ]
+}
+```
+
+All nine job conclusions from the connector:
+
+```json
+[
+  {
+    "name": "build",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "licenses",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "openspec",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "lint-type",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (windows-latest, 3.12, true)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (ubuntu-latest, 3.13)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (ubuntu-latest, 3.11)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (ubuntu-latest, 3.12)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  {
+    "name": "test (macos-latest, 3.12)",
+    "status": "completed",
+    "conclusion": "success"
+  }
+]
+```
+
+The documentation commit containing this evidence triggers a fresh head run;
+its final result and complete authorship log are pasted in the PR description.
+The specifically required gh conclusion output remains blocked:
+
+```text
+$ gh run view 39058162855 --repo drkwv34/lodestone-kb --json conclusion
+failed to get run: Get "https://api.github.com/repos/drkwv34/lodestone-kb/actions/runs/39058162855?exclude_pull_requests=true": Forbidden
+```
+
 
 ```text
 $ gh run list --repo drkwv34/lodestone-kb --branch day-1-scaffold --json databaseId,headSha,status,conclusion,url
@@ -52,7 +132,7 @@ failed to get runs: Get "https://api.github.com/repos/drkwv34/lodestone-kb/actio
 The inherited root commit has a GitHub committer. Rewriting it would violate the
 no-history-rewrite instruction; this exception is reported, not marked passed.
 All new commits use Christian as both author and committer. Snapshot below is
-through the implementation commits; the PR description also records final HEAD.
+through the CI checkpoint bd10aff; the PR description also records final HEAD.
 
 ```text
 $ git log --reverse --format='%h %an <%ae> | %cn <%ce>'
@@ -61,6 +141,7 @@ a29d735 Christian Agila <87576768+drkwv34@users.noreply.github.com> | GitHub <no
 82c9a2e Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 9fa446c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 91557d9 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+bd10aff Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 ```
 
 ```text
@@ -99,7 +180,7 @@ Required test coverage of 70% reached. Total coverage: 98.22%
 | FR-082 | `test_fr_082_migration_apply_schema_and_idempotence`, `test_fr_082_newer_version_refused_without_mutation`, `test_fr_082_failed_migration_rolls_back_ddl_and_version`, `test_fr_082_missing_migration_and_active_transaction`, `test_fr_082_forward_upgrade_from_v1_fixture` |
 | FR-080 (partial) | `test_fr_080_fts5_identifier_probe`, `test_fr_080_disabled_fts5_reports_remediation`, `test_fr_080_missing_and_outdated_database`, `test_fr_080_doctor_smoke` |
 | FR-005 preview | `test_fr_005_secret_redaction_preview` |
-| NFR-011 | CI matrix Ubuntu 3.11/3.12/3.13, macOS 3.12, Windows 3.12; E2E tests named `smoke`; remote result pending |
+| NFR-011 | CI matrix Ubuntu 3.11/3.12/3.13, macOS 3.12, Windows 3.12; E2E tests named `smoke`; all matrix jobs succeeded at bd10aff (E2) |
 | NFR-012 Day 1 | `test_nfr_012_module_limit_and_spdx_headers`; 70% coverage, mypy strict, Ruff, import-linter and module gates |
 | NFR-017 | `test_nfr_017_license_and_notice`; `pip-licenses --partial-match --fail-on='GPL;AGPL'` report generated locally and uploaded by CI |
 

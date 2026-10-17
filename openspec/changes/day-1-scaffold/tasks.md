@@ -15,6 +15,6 @@
 
 ## 3. Delivery
 - [x] 3.1 Push branch and open a ready PR with pasted evidence.
-- [ ] 3.2 Obtain successful CI on the exact PR head; never weaken a check.
+- [x] 3.2 Obtain successful CI on the exact PR head; never weaken a check.
 - [ ] 3.3 Merge locally with --no-ff as Christian and push main and day-1 tag.
 - [ ] 3.4 Archive on main, validate --all --strict, commit directly and update evidence.
