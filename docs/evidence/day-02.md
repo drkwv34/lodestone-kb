@@ -670,5 +670,30 @@ $ git log day-1..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
 ```
 
 Archive location: `openspec/changes/archive/2026-10-17-day-2-lexical-search/`.
-The `day-2` tag target is the merge commit `c8f34aedea0b12a38b378e83fa3457db97037a30`;
-publication is recorded after the tag push succeeds.
+The annotated `day-2` tag was published and resolves to merge commit
+`c8f34aedea0b12a38b378e83fa3457db97037a30`, not either later archive/evidence commit.
+
+## Published archive and merge-commit tag
+
+Archive/evidence commit `38c7d92` was pushed directly on main. The following
+outputs were captured after each successful push; no push was refused.
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb.git
+   c8f34ae..38c7d92  main -> main
+```
+
+```text
+$ git push origin refs/tags/day-2
+To https://github.com/drkwv34/lodestone-kb.git
+ * [new tag]         day-2 -> day-2
+```
+
+```text
+$ git rev-parse day-2^{commit}
+c8f34aedea0b12a38b378e83fa3457db97037a30
+```
+
+Day 2 is complete. The final documentation commit records these already-successful
+pushes; the chat delivery includes the full authorship log through that commit.
