@@ -1,13 +1,14 @@
-# Day 01 evidence — partial delivery
+# Day 01 evidence
 
 Implements Day 1 only: configuration, workspace setup, schema v1, local diagnostic
 probes and blocking repository gates. Five supplied specifications were committed
 first in 272b0e3. No paid APIs. Branch/change: `day-1-scaffold`.
 
-Delivery is partial: the installed gh CLI cannot access GitHub API endpoints in
-this environment (`Forbidden`). Git push works; the GitHub connector is used to
-open a ready PR. Main, tag and archive are deliberately pending the prescribed
-CI/merge workflow. No archive validation is claimed before an archive exists.
+PR #1 was merged locally on main as Christian after CI succeeded on dbdea77.
+The merge was pushed and OpenSpec archived and validated. Tag publication is the
+next delivery step. The gh CLI API remains Forbidden; the user independently
+verified CI and explicitly authorised completion on 2026-10-17. Git push and the
+GitHub connector work. Historical CLI failures below are retained as evidence.
 
 ## E1 — real OpenSpec CLI
 
@@ -35,9 +36,31 @@ Changes:
   day-1-scaffold     13/15 tasks   just now
 ```
 
-After-archive `openspec validate --all --strict`: PENDING, archive must follow merge.
+After-archive validation output is pasted in the post-merge section below.
 
 ## E2 — remote CI and blocker
+
+Final PR-head CI: https://github.com/drkwv34/lodestone-kb/actions/runs/39058358316
+for `dbdea77c2bff55f0659fa0e1122164c0b55352a0`. Actual connector output:
+
+```json
+{
+  "workflow_runs": [
+    {
+      "id": 39058358316,
+      "name": "ci",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 6,
+      "jobs_url": "https://api.github.com/repos/drkwv34/lodestone-kb/actions/runs/39058358316/jobs",
+      "logs_url": "https://api.github.com/repos/drkwv34/lodestone-kb/actions/runs/39058358316/logs",
+      "workflow_id": 387873939
+    }
+  ]
+}
+```
+
+The earlier checkpoint and historical CLI blocker follow.
 
 CI checkpoint: https://github.com/drkwv34/lodestone-kb/actions/runs/39058162855
 for head `bd10aff2166e147f64a3af1599f19db2dd7ac956`.
@@ -252,3 +275,73 @@ Successfully built lodestone_kb-0.1.0.dev0.tar.gz and lodestone_kb-0.1.0.dev0-py
 The wheel was installed into a separate virtual environment, and the CLI smoke
 script ran from a temporary directory outside the checkout. Ruff formatting
 excludes immutable uploaded spec snapshots; all implementation modules are checked.
+
+## Post-merge archive on main (2026-10-17)
+
+Merge commit: `443fde2271118f00e2111aab3ecaec98ab7eee8e`. PR #1 is closed and merged. No history was rewritten.
+
+```text
+$ git show --no-patch --format=fuller 443fde2271118f00e2111aab3ecaec98ab7eee8e
+commit 443fde2271118f00e2111aab3ecaec98ab7eee8e
+Merge: a29d735 dbdea77
+Author:     Christian Agila <87576768+drkwv34@users.noreply.github.com>
+AuthorDate: Sat Oct 17 19:23:20 2026 +0000
+Commit:     Christian Agila <87576768+drkwv34@users.noreply.github.com>
+CommitDate: Sat Oct 17 19:23:20 2026 +0000
+
+    Merge day-1-scaffold: scaffold, config, storage, CLI skeleton, CI (Day 1)
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb.git
+   a29d735..443fde2  main -> main
+```
+
+```text
+$ openspec archive day-1-scaffold --yes
+Task status: 13/15 tasks
+Warning: 2 incomplete task(s) found. Continuing due to --yes flag.
+
+Specs to update:
+  repository-gates: create
+  workspace-foundation: create
+Applying changes to openspec/specs/repository-gates/spec.md:
+  + 3 added
+Applying changes to openspec/specs/workspace-foundation/spec.md:
+  + 5 added
+Totals: + 8, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'day-1-scaffold' archived as '2026-10-17-day-1-scaffold'.
+```
+The two archive warnings concern the delivery tasks themselves; they are completed in the final delivery record after archive/tag publication. No validation check was skipped.
+
+```text
+$ openspec validate --all --strict
+✓ spec/repository-gates
+✓ spec/workspace-foundation
+Totals: 2 passed, 0 failed (2 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
+
+```text
+$ git log --format='%h %an <%ae> | %cn <%ce>' a29d735..HEAD
+443fde2 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+dbdea77 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+bd10aff Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+91557d9 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+9fa446c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+82c9a2e Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+272b0e3 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+```
+
+```text
+$ co-authored-by count in git log --format=%B a29d735..HEAD (case-insensitive)
+0
+```
+
+This authorship snapshot precedes the direct archive commit that stores it. The final PR description and chat include the completed main-branch log.
