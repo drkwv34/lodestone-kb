@@ -5,8 +5,8 @@ probes and blocking repository gates. Five supplied specifications were committe
 first in 272b0e3. No paid APIs. Branch/change: `day-1-scaffold`.
 
 PR #1 was merged locally on main as Christian after CI succeeded on dbdea77.
-The merge was pushed and OpenSpec archived and validated. Tag publication is the
-next delivery step. The gh CLI API remains Forbidden; the user independently
+The merge, direct archive commit and evidence were pushed. OpenSpec is archived
+and strictly validated; annotated tag day-1 is published on the merge commit. The gh CLI API remains Forbidden; the user independently
 verified CI and explicitly authorised completion on 2026-10-17. Git push and the
 GitHub connector work. Historical CLI failures below are retained as evidence.
 
@@ -345,3 +345,54 @@ $ co-authored-by count in git log --format=%B a29d735..HEAD (case-insensitive)
 ```
 
 This authorship snapshot precedes the direct archive commit that stores it. The final PR description and chat include the completed main-branch log.
+
+## Published archive and day-1 tag
+
+
+```text
+$ git push origin main (archive commit)
+To https://github.com/drkwv34/lodestone-kb.git
+   443fde2..03432c7  main -> main
+```
+
+```text
+$ git push origin refs/tags/day-1
+To https://github.com/drkwv34/lodestone-kb.git
+ * [new tag]         day-1 -> day-1
+```
+
+```text
+$ git tag -l
+day-1
+```
+
+```text
+$ git rev-parse day-1^{commit}
+443fde2271118f00e2111aab3ecaec98ab7eee8e
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/repository-gates
+✓ spec/workspace-foundation
+Totals: 2 passed, 0 failed (2 items)
+```
+
+```text
+$ git log --format='%h %an <%ae> | %cn <%ce>' a29d735..HEAD
+03432c7 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+443fde2 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+dbdea77 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+bd10aff Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+91557d9 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+9fa446c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+82c9a2e Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+272b0e3 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+```
+
+```text
+$ co-authored-by count (case-insensitive, a29d735..HEAD commit messages)
+0
+```
+
+Snapshot includes the archive commit and precedes this final evidence commit. Both delivery tasks in the archived change are now checked complete. Tag day-1 remains on merge 443fde2.
