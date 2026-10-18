@@ -23,6 +23,8 @@ lodestone = "lodestone.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lodestone"]
+[tool.hatch.build.targets.wheel.force-include]
+"src/lodestone/prompts/card.v1.md" = "lodestone/prompts/card.v1.md"
 
 [tool.ruff]
 line-length = 100
@@ -51,5 +53,5 @@ addopts = "--strict-markers -m 'not perf and not network'"
 source = ["lodestone"]
 
 [tool.coverage.report]
-fail_under = 70
+fail_under = 80
 show_missing = true
