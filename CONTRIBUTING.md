@@ -14,7 +14,7 @@ pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=70
 ```
 
 Name tests with the requirement ID (`test_fr_001_...`). No paid APIs in tests.
-Network tests are opt-in. Performance tests start on Day 7. Keep modules at or
+Network tests are opt-in. Performance tests start with hybrid fusion. Keep modules at or
 below 500 lines and use SPDX Apache-2.0 headers. Run the CI dependency license
 command before changing dependencies. See [the code of conduct](CODE_OF_CONDUCT.md).
 
@@ -26,5 +26,5 @@ After a green PR, merge locally using `git merge --no-ff`; archive only after
 merge on main and commit the archive directly. Do not rewrite history.
 
 Use small Conventional Commits with the configured owner identity and no
-co-author trailers. Paste actual command outputs in daily evidence and the PR.
+co-author trailers. Paste actual command outputs in feature evidence and the PR.
 Connector implementation guidance will arrive with the connector delivery.

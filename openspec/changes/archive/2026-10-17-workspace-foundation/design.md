@@ -1,7 +1,7 @@
 ## Context
 
-Use the supplied architecture sections 3.1 and 7.1, scoped by the Day 1 delivery
-plan. Python >=3.11, pydantic v2, Typer and hatchling. See decision 0001 for the
+Use the supplied architecture sections 3.1 and 7.1, scoped by the workspace
+foundation delivery plan. Python >=3.11, pydantic v2, Typer and hatchling. See decision 0001 for the
 external-content FTS column correction and transactional version stamping.
 
 ## Goals / Non-Goals

@@ -1,12 +1,13 @@
-# Day 01 evidence
+# Workspace foundation evidence
 
-Implements Day 1 only: configuration, workspace setup, schema v1, local diagnostic
+Implements the workspace foundation only: configuration, workspace setup, schema v1, local diagnostic
 probes and blocking repository gates. Five supplied specifications were committed
-first in 272b0e3. No paid APIs. Branch/change: `day-1-scaffold`.
+first in 272b0e3. No paid APIs. Implementation branch and OpenSpec change used the
+historical slug recorded in the command transcripts below.
 
 PR #1 was merged locally on main as Christian after CI succeeded on dbdea77.
 The merge, direct archive commit and evidence were pushed. OpenSpec is archived
-and strictly validated; annotated tag day-1 is published on the merge commit. The gh CLI API remains Forbidden; the user independently
+and strictly validated; an annotated tag is published on the merge commit. The gh CLI API remains Forbidden; the user independently
 verified CI and explicitly authorised completion on 2026-10-17. Git push and the
 GitHub connector work. Historical CLI failures below are retained as evidence.
 
@@ -17,7 +18,7 @@ $ npm i -g @fission-ai/openspec@latest; openspec --version
 1.14.3
 ```
 Installed globally under a writable workspace prefix. `openspec init --tools none`
-and `openspec new change day-1-scaffold` created the real project/change.
+and `openspec new change` created the real project/change (historical slug in the transcripts below).
 
 ```text
 $ openspec validate day-1-scaffold --strict
@@ -204,7 +205,7 @@ Required test coverage of 70% reached. Total coverage: 98.22%
 | FR-080 (partial) | `test_fr_080_fts5_identifier_probe`, `test_fr_080_disabled_fts5_reports_remediation`, `test_fr_080_missing_and_outdated_database`, `test_fr_080_doctor_smoke` |
 | FR-005 preview | `test_fr_005_secret_redaction_preview` |
 | NFR-011 | CI matrix Ubuntu 3.11/3.12/3.13, macOS 3.12, Windows 3.12; E2E tests named `smoke`; all matrix jobs succeeded at bd10aff (E2) |
-| NFR-012 Day 1 | `test_nfr_012_module_limit_and_spdx_headers`; 70% coverage, mypy strict, Ruff, import-linter and module gates |
+| NFR-012 initial gates | `test_nfr_012_module_limit_and_spdx_headers`; 70% coverage, mypy strict, Ruff, import-linter and module gates |
 | NFR-017 | `test_nfr_017_license_and_notice`; `pip-licenses --partial-match --fail-on='GPL;AGPL'` report generated locally and uploaded by CI |
 
 Local gate outputs:
@@ -346,7 +347,7 @@ $ co-authored-by count in git log --format=%B a29d735..HEAD (case-insensitive)
 
 This authorship snapshot precedes the direct archive commit that stores it. The final PR description and chat include the completed main-branch log.
 
-## Published archive and day-1 tag
+## Published archive and merge-commit tag
 
 
 ```text
@@ -395,4 +396,4 @@ $ co-authored-by count (case-insensitive, a29d735..HEAD commit messages)
 0
 ```
 
-Snapshot includes the archive commit and precedes this final evidence commit. Both delivery tasks in the archived change are now checked complete. Tag day-1 remains on merge 443fde2.
+Snapshot includes the archive commit and precedes this final evidence commit. Both delivery tasks in the archived change are now checked complete. The annotated tag remains on merge 443fde2.

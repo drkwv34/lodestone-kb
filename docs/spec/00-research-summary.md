@@ -122,7 +122,7 @@ Why this and not alternatives considered:
 - *Graph RAG*: rejected, heavy, covered by Microsoft/HKUDS/Cognee.
 - *PageIndex clone*: rejected, well-funded incumbent, single-document focus.
 - *CAG tool*: too narrow (bounded corpora) but included as a bench strategy.
-- *Lodestone*: uses the post's most reusable ideas (distillation cards, multi-signal fusion, LLM-free primitives, projects, one row shape), works without embeddings (so works offline/free), and its bench answers the question the literature leaves open. Feasible in ~13 project-days by one agent with deterministic fakes (no paid API needed in CI).
+- *Lodestone*: uses the post's most reusable ideas (distillation cards, multi-signal fusion, LLM-free primitives, projects, one row shape), works without embeddings (so works offline/free), and its bench answers the question the literature leaves open. Feasible as a compact MVP with deterministic fakes (no paid API needed in CI).
 
 Risks (detail in SRS): crowded neighbourhood (qmd), LLM cost at ingest, benchmark validity (synthetic questions leak lexical overlap), distillation hallucination, scope creep. Mitigations are written into requirements (leakage metric, card provenance links, strict MVP boundary).
 

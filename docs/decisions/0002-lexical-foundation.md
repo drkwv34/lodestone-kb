@@ -1,6 +1,6 @@
-# Day 2 lexical foundation
+# Lexical search foundation
 
-The Day 2 scope is exactly FR-010 (md/txt/rst), FR-014 (hash skeleton), FR-030,
+The lexical-search scope is exactly FR-010 (md/txt/rst), FR-014 (hash skeleton), FR-030,
 FR-032 (infrastructure plus the requested rare lane), and FR-041 (source/kind).
 The supplied specifications and migration 0001 remain unchanged.
 
@@ -34,16 +34,16 @@ The supplied specifications and migration 0001 remain unchanged.
    SHA-256 covers `file-v0`, a NUL separator, and NFC text with CRLF/CR normalised
    to LF. Raw UTF-8 text is preserved. Unchanged normalised content does not write
    records, FTS, stats, or registry metadata; `last_synced_at` advances when content
-   is processed. Cards/embeddings remain pending for their delivery days. Upstream
-   deletion, pruning and structural chunks stay on Day 3.
-6. `sync` and `search` extend the Day 1 CLI and workspace lifecycle. Search opens
+   is processed. Cards/embeddings remain pending for their delivery features. Upstream
+   deletion, pruning and structural chunks stay with structural chunkers and sources.
+6. `sync` and `search` extend the workspace-foundation CLI and workspace lifecycle. Search opens
    read-only and asks for migration via init when necessary. Output is a selected
    single lane, with positive `-bm25` scores, source/kind SQL filters, deterministic
    score/updated_at/id ordering and optional JSON. Project scoping, complete SDK,
-   fusion and evidence.v1 remain on their scheduled days. The existing import
+   fusion and evidence.v1 remain on their scheduled features. The existing import
    contract stays intact and a second contract covers the new layers.
 7. The user explicitly requires stopping before merge. The OpenSpec change remains
-   active. Merge, archive as a direct commit on main, and day-2 tagging await the
+   active. Merge, archive as a direct commit on main, and feature tagging await the
    follow-up. Evidence commits necessarily follow the CI run whose output they
    embed; the final PR description records the subsequent final-head CI output,
    while the committed evidence retains the clearly identified implementation

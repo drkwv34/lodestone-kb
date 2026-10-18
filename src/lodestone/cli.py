@@ -66,7 +66,7 @@ def config_show(config: ConfigOption = Path("lodestone.toml")) -> None:
 
 @app.command()
 def doctor(config: ConfigOption = Path("lodestone.toml")) -> None:
-    """Probe Python, SQLite, FTS5, and database schema (Day 1 subset of FR-080)."""
+    """Probe Python, SQLite, FTS5, and database schema (subset of FR-080)."""
     cfg = configuration(config)
     errors: list[str] = []
     typer.echo(f"Python: {platform.python_version()}")
@@ -89,7 +89,7 @@ def doctor(config: ConfigOption = Path("lodestone.toml")) -> None:
         typer.echo(f"ERROR: {error}", err=True)
     if errors:
         raise typer.Exit(1)
-    typer.echo("Doctor: OK (local Day 1 probes)")
+    typer.echo("Doctor: OK (local schema probes)")
 
 
 @app.command()

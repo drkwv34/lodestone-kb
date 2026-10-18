@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: FR-010 local text files
-The connector SHALL implement "FR-010" for md/txt/rst only on Day 2, matching
+The connector SHALL implement "FR-010" for md/txt/rst only in lexical search, matching
 include/exclude globs and nested .gitignore rules, rejecting traversal and paths
 resolving outside the source root, and logging skips for binaries and files over
 max_file_bytes (default 1 MiB).
