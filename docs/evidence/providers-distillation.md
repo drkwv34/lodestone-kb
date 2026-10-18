@@ -109,6 +109,10 @@ Recorded after the feature commits on `feat/providers-distillation`:
 
 ```text
 $ git log 376de6a..HEAD --format='%h %an <%ae> | %cn <%ce>'
+3faf532 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+c1345ee Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+9e72cfb Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+4790aef Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 ```
 
 ```text
@@ -164,4 +168,29 @@ $ lodestone cost
 
 ## CI
 
-Pending the ready PR head. The run URL, head SHA and `conclusion: success` will be pasted here once GitHub Actions completes on the PR head.
+PR head `3faf532763ae073538a6547b71a68d788c15b52b`. All nine jobs `completed` / `success`.
+
+```text
+https://github.com/drkwv34/lodestone-kb/actions/runs/39147658411
+conclusion: success
+```
+
+```json
+{
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39147658411",
+  "head_sha": "3faf532763ae073538a6547b71a68d788c15b52b",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "openspec", "status": "completed", "conclusion": "success"},
+    {"name": "licenses", "status": "completed", "conclusion": "success"},
+    {"name": "build", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
+    {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
+    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
+  ]
+}
+```
