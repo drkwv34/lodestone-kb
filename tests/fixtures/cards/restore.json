@@ -1,0 +1,26 @@
+{
+  "question": "Restore stalls after manifest load",
+  "summary": "Why does restore stall after manifest load? The restore job waits until NFS returns the file handle.",
+  "resolution": "",
+  "entities": [
+    "Why",
+    "The",
+    "NFS",
+    "Setting",
+    "See"
+  ],
+  "code_refs": [
+    "CKPT_PREFETCH",
+    "snake_case_helper",
+    "CamelCase",
+    "RestoreLatch",
+    "src/restore.py"
+  ],
+  "source_message_ids": [],
+  "char_spans": [
+    {
+      "start": 0,
+      "end": 100
+    }
+  ]
+}

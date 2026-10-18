@@ -30,6 +30,7 @@ def test_fr_082_migration_apply_schema_and_idempotence(tmp_path: Path) -> None:
             "project_sources",
             "records",
             "records_fts",
+            "records_card_fts",
             "term_stats",
             "card_cache",
             "embeddings",
@@ -45,8 +46,8 @@ def test_fr_082_migration_apply_schema_and_idempotence(tmp_path: Path) -> None:
         assert connection.execute("SELECT value FROM meta WHERE key='sentinel'").fetchone() == (
             "keep",
         )
-        # External-content reads must succeed, including the corrected norm_text column.
         assert connection.execute("SELECT * FROM records_fts").fetchall() == []
+        assert connection.execute("SELECT * FROM records_card_fts").fetchall() == []
         with pytest.raises(sqlite3.IntegrityError):
             connection.execute("INSERT INTO project_sources VALUES (999, 999)")
         connection.rollback()

@@ -106,6 +106,7 @@ class Cards(Model):
     kinds: list[Kind] = Field(default=["thread", "doc", "code_file"])
     prompt_version: str = "card.v1"
     max_input_chars: PositiveInt = 24000
+    norm_format: Literal["plain", "xml"] = "plain"
 
 
 class Bursts(Model):

@@ -4,11 +4,14 @@
 import sqlite3
 from pathlib import Path
 
-from lodestone.config import DEFAULT_TOML, Config, Source, load_config
+from lodestone.config import DEFAULT_TOML, Config, Prices, Source, load_config
 from lodestone.config_io import registry_text, replace_config
 from lodestone.ingest.pipeline import SyncReport, sync
 from lodestone.lanes.fts import Hit, LaneName, search
+from lodestone.providers import make_chat
+from lodestone.storage.costs import summarise
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, open_database
+from lodestone.storage.records import get_record
 from lodestone.storage.registry import reconcile
 
 
@@ -35,10 +38,46 @@ def sync_workspace(
     sources: list[str] | None = None,
     project: str | None = None,
     prune: bool = False,
+    provider: str | None = None,
+    refresh_cards: bool = False,
 ) -> SyncReport:
     connection = open_database(config.workspace.db_path)
     try:
-        return sync(connection, config, sources=sources, project=project, prune=prune)
+        chat = make_chat(config, provider)
+        try:
+            return sync(
+                connection,
+                config,
+                sources=sources,
+                project=project,
+                prune=prune,
+                chat=chat,
+                refresh_cards=refresh_cards,
+            )
+        finally:
+            closer = getattr(chat, "close", None)
+            if callable(closer):
+                closer()
+    finally:
+        connection.close()
+
+
+def cost_workspace(config: Config) -> dict[str, object]:
+    connection = sqlite3.connect(f"{config.workspace.db_path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        prices = config.llm.prices if config.llm is not None else Prices()
+        return summarise(connection, prices)
+    finally:
+        connection.close()
+
+
+def get_workspace(config: Config, ref: str, source: str | None = None) -> dict[str, object]:
+    path = config.workspace.db_path
+    if inspect_database(path) != SCHEMA_VERSION:
+        raise StorageError("Database requires migration; run lodestone init")
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        return get_record(connection, ref, source)
     finally:
         connection.close()
 

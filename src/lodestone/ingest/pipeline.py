@@ -14,6 +14,14 @@ from itertools import chain
 from lodestone.chunking import code, markdown
 from lodestone.config import Chunks, Config
 from lodestone.connectors.files import CODE_KINDS, FilesConnector, RawItem
+from lodestone.distill.apply import (
+    CardStats,
+    apply_cards,
+    bind_log,
+    contextualize_children,
+    requeue_embeddings,
+)
+from lodestone.providers import Chat
 from lodestone.storage.registry import reconcile, register
 
 CHUNKER_VERSION = markdown.VERSION + "/" + code.VERSION
@@ -32,6 +40,10 @@ class SyncReport:
     llm_calls: int = 0
     tombstoned: int = 0
     pruned: int = 0
+    cache_hits: int = 0
+    cache_misses: int = 0
+    cards_llm: int = 0
+    cards_heuristic: int = 0
 
 
 def upsert(
@@ -143,12 +155,17 @@ def sync(
     sources: list[str] | None = None,
     project: str | None = None,
     prune: bool = False,
+    chat: Chat | None = None,
+    refresh_cards: bool = False,
 ) -> SyncReport:
     names = config.scoped_sources(project, sources)
     selected = [source for source in config.sources if source.name in names]
     if any(source.kind != "files" for source in selected):
         raise ValueError("sync supports files sources only")
     report = SyncReport()
+    stats = CardStats()
+    if chat is not None:
+        bind_log(chat, connection, stats)
     for source in selected:
         connector = FilesConnector()
         # Begin discovery before registration; an invalid root cannot create registry entries.
@@ -160,7 +177,18 @@ def sync(
         seen: set[str] = set()
         for item in chain([first] if first is not None else [], items):
             seen.add(item.ext_id)
-            if upsert(connection, source_id, item, config.chunks):
+            wrote = upsert(connection, source_id, item, config.chunks)
+            parent = connection.execute(
+                "SELECT id FROM records WHERE source_id=? AND ext_id=?",
+                (source_id, item.ext_id),
+            ).fetchone()
+            if parent is None:
+                continue
+            parent_id = int(parent[0])
+            with connection:
+                apply_cards(connection, parent_id, config, chat, stats, refresh=refresh_cards)
+                contextualize_children(connection, parent_id, config, chat)
+            if wrote:
                 report.processed += 1
                 changed = True
             else:
@@ -182,5 +210,11 @@ def sync(
                     (datetime.now(UTC).isoformat(), source_id),
                 )
     with connection:
+        requeue_embeddings(connection, config.embed.source)
         reconcile(connection, config)
+    report.llm_calls = stats.llm_calls
+    report.cache_hits = stats.cache_hits
+    report.cache_misses = stats.cache_misses
+    report.cards_llm = stats.cards_llm
+    report.cards_heuristic = stats.cards_heuristic
     return report

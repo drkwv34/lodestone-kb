@@ -12,15 +12,43 @@ from typing import Literal
 from lodestone.storage.terms import rare_terms
 from lodestone.tokenize import tokenize
 
-LaneName = Literal["fts_raw", "fts_rare"]
+LaneName = Literal["fts_raw", "fts_card", "fts_rare"]
 MAX_CLAUSES = 64
+LANE_COLUMNS: dict[LaneName, str] = {
+    "fts_raw": "title text",
+    "fts_card": "norm_text",
+    "fts_rare": "title text",
+}
+LANE_SQL: dict[LaneName, tuple[str, str]] = {
+    "fts_raw": (
+        "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
+        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0),r.updated_at "
+        "FROM records_fts JOIN records r ON r.id=records_fts.rowid "
+        "JOIN sources s ON s.id=r.source_id WHERE ",
+        " ORDER BY bm25(records_fts,3.0,1.0),r.updated_at DESC,r.id LIMIT ?",
+    ),
+    "fts_card": (
+        "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
+        "snippet(records_card_fts,0,'[',']',' … ',32),bm25(records_card_fts),r.updated_at "
+        "FROM records_card_fts JOIN records r ON r.id=records_card_fts.rowid "
+        "JOIN sources s ON s.id=r.source_id WHERE ",
+        " ORDER BY bm25(records_card_fts),r.updated_at DESC,r.id LIMIT ?",
+    ),
+    "fts_rare": (
+        "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
+        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0),r.updated_at "
+        "FROM records_fts JOIN records r ON r.id=records_fts.rowid "
+        "JOIN sources s ON s.id=r.source_id WHERE ",
+        " ORDER BY bm25(records_fts,3.0,1.0),r.updated_at DESC,r.id LIMIT ?",
+    ),
+}
 
 
 def quote(term: str) -> str:
     return '"' + term.replace('"', '""') + '"'
 
 
-def sanitise(query: str) -> str:
+def sanitise(query: str, columns: str = "title text") -> str:
     """Preserve phrases/trailing prefix stars, OR-expand words, quote all user syntax.
 
     Limit clauses to avoid FTS parser depth limits even for adversarial inputs.
@@ -39,7 +67,7 @@ def sanitise(query: str) -> str:
         if len(clauses) >= MAX_CLAUSES:
             break
     unique = list(dict.fromkeys(clauses))[:MAX_CLAUSES]
-    return "{title text} : (" + " OR ".join(unique) + ")" if unique else ""
+    return "{" + columns + "} : (" + " OR ".join(unique) + ")" if unique else ""
 
 
 @dataclass(frozen=True)
@@ -67,18 +95,21 @@ def search(
     rare_idf: float = 4.0,
     rare_df_ratio: float | None = None,
 ) -> list[Hit]:
-    if lane not in ("fts_raw", "fts_rare"):
-        raise ValueError("lane must be fts_raw or fts_rare")
+    if lane not in LANE_COLUMNS:
+        raise ValueError("lane must be fts_raw, fts_card or fts_rare")
     if limit < 1:
         raise ValueError("limit must be positive")
+    columns = LANE_COLUMNS[lane]
+    prefix, suffix = LANE_SQL[lane]
     if lane == "fts_rare":
         terms = rare_terms(connection, tokenize(query[:16384]), rare_idf, rare_df_ratio)
-        expression = sanitise(" ".join(quote(term) for term in terms[:MAX_CLAUSES]))
+        expression = sanitise(" ".join(quote(term) for term in terms[:MAX_CLAUSES]), columns)
     else:
-        expression = sanitise(query)
+        expression = sanitise(query, columns)
     if not expression:
         return []
-    where = ["records_fts MATCH ?", "r.tombstoned=0"]
+    match = "records_card_fts MATCH ?" if lane == "fts_card" else "records_fts MATCH ?"
+    where = [match, "r.tombstoned=0"]
     parameters: list[str | int] = [expression]
     for column, values in (("s.name", sources), ("r.kind", kinds)):
         if values is not None:
@@ -87,14 +118,7 @@ def search(
             where.append(column + " IN (" + ",".join("?" for _ in values) + ")")
             parameters.extend(values)
     parameters.append(limit)
-    sql = (
-        "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
-        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0,0.0),r.updated_at "
-        "FROM records_fts JOIN records r ON r.id=records_fts.rowid "
-        "JOIN sources s ON s.id=r.source_id WHERE "
-        + " AND ".join(where)
-        + " ORDER BY bm25(records_fts,3.0,1.0,0.0),r.updated_at DESC,r.id LIMIT ?"
-    )
+    sql = prefix + " AND ".join(where) + suffix
     return [
         Hit(
             id=row[0],
