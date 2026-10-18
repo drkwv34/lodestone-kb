@@ -142,7 +142,7 @@ def test_fr_041_source_kind_filters_before_limit(database, record_factory) -> No
             ["doc", "thread"],
             ["' OR 1=1 --"],
         ):
-            for lane in ("fts_raw", "fts_rare"):
+            for lane in ("fts_raw", "fts_card", "fts_rare"):
                 hits = search(
                     database, "needle", sources=source, kinds=kinds, lane=lane, rare_idf=0
                 )

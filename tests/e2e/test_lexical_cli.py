@@ -62,7 +62,7 @@ def test_fr_010_fr_030_fr_041_sync_search_smoke(tmp_path: Path) -> None:
     assert rare.returncode == 0, rare.stderr
     assert [hit["ext_id"] for hit in json.loads(rare.stdout)["hits"]] == ["manifest.md"]
     assert command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--source", "other").returncode == 2
-    assert command(tmp_path, "search", "test", "--lane", "fts_card").returncode == 2
+    assert command(tmp_path, "search", "test", "--lane", "fts_missing").returncode == 2
 
 
 def test_fr_010_fr_030_cli_errors_and_readonly_search(tmp_path: Path) -> None:

@@ -15,8 +15,11 @@ import typer
 
 from lodestone.config import Config, ConfigError, Source, load_config, redact
 from lodestone.lanes.fts import LaneName
+from lodestone.providers import ProviderError
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, probe_fts5
 from lodestone.workspace import (
+    cost_workspace,
+    get_workspace,
     initialise,
     search_workspace,
     source_list,
@@ -98,18 +101,66 @@ def sync(
     project: Annotated[str | None, typer.Option()] = None,
     source: Annotated[list[str] | None, typer.Option()] = None,
     prune: Annotated[bool, typer.Option()] = False,
+    provider: Annotated[str | None, typer.Option(help="fake or config.")] = None,
+    refresh_cards: Annotated[bool, typer.Option("--refresh-cards")] = False,
 ) -> None:
     """Sync structural document/code records; optionally purge missing files."""
     cfg = configuration(config)
     try:
-        report = sync_workspace(cfg, sources=source, project=project, prune=prune)
+        report = sync_workspace(
+            cfg,
+            sources=source,
+            project=project,
+            prune=prune,
+            provider=provider,
+            refresh_cards=refresh_cards,
+        )
     except ValueError as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
         raise typer.Exit(2) from None
+    except ProviderError as exc:
+        typer.echo(f"Provider error: {exc}", err=True)
+        raise typer.Exit(3) from None
     except (OSError, sqlite3.Error, StorageError) as exc:
         typer.echo(f"Sync error: {exc}", err=True)
         raise typer.Exit(1) from None
     typer.echo(json.dumps(asdict(report)))
+
+
+@app.command()
+def cost(config: ConfigOption = Path("lodestone.toml")) -> None:
+    """Summarise llm_log rows per operation using the configured price table."""
+    cfg = configuration(config)
+    try:
+        typer.echo(json.dumps(cost_workspace(cfg), indent=2))
+    except (OSError, sqlite3.Error, StorageError) as exc:
+        typer.echo(f"Cost error: {exc}", err=True)
+        raise typer.Exit(1) from None
+
+
+@app.command("get")
+def get_record_cmd(
+    ref: Annotated[str, typer.Argument(help="Record id or ext_id.")],
+    config: ConfigOption = Path("lodestone.toml"),
+    source: Annotated[str | None, typer.Option()] = None,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Return raw text beside the stored card so claims stay checkable."""
+    cfg = configuration(config)
+    try:
+        view = get_workspace(cfg, ref, source)
+    except KeyError as exc:
+        typer.echo(f"Get error: {exc}", err=True)
+        raise typer.Exit(1) from None
+    except (OSError, sqlite3.Error, StorageError) as exc:
+        typer.echo(f"Get error: {exc}", err=True)
+        raise typer.Exit(1) from None
+    if json_output:
+        typer.echo(json.dumps(view, indent=2))
+        return
+    typer.echo(str(view["raw_text"]))
+    if view["card"] is not None:
+        typer.echo(json.dumps(view["card"], indent=2))
 
 
 @app.command()
@@ -227,6 +278,15 @@ def source_sync(
     config: ConfigOption = Path("lodestone.toml"),
     project: Annotated[str | None, typer.Option()] = None,
     prune: Annotated[bool, typer.Option()] = False,
+    provider: Annotated[str | None, typer.Option()] = None,
+    refresh_cards: Annotated[bool, typer.Option("--refresh-cards")] = False,
 ) -> None:
     """Sync one source, or all sources in the selected project."""
-    sync(config=config, project=project, source=[name] if name is not None else None, prune=prune)
+    sync(
+        config=config,
+        project=project,
+        source=[name] if name is not None else None,
+        prune=prune,
+        provider=provider,
+        refresh_cards=refresh_cards,
+    )
