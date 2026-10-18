@@ -168,29 +168,80 @@ $ lodestone cost
 
 ## CI
 
-PR head `3faf532763ae073538a6547b71a68d788c15b52b`. All nine jobs `completed` / `success`.
+Final PR head `199818e7c6b9d892ad24befd1a0a2f5a639f5db1`. All nine jobs `completed` / `success`.
 
 ```text
-https://github.com/drkwv34/lodestone-kb/actions/runs/39147658411
+https://github.com/drkwv34/lodestone-kb/actions/runs/39148020214
 conclusion: success
 ```
 
 ```json
 {
-  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39147658411",
-  "head_sha": "3faf532763ae073538a6547b71a68d788c15b52b",
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39148020214",
+  "head_sha": "199818e7c6b9d892ad24befd1a0a2f5a639f5db1",
   "status": "completed",
   "conclusion": "success",
   "jobs": [
-    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "build", "status": "completed", "conclusion": "success"},
     {"name": "openspec", "status": "completed", "conclusion": "success"},
     {"name": "licenses", "status": "completed", "conclusion": "success"},
-    {"name": "build", "status": "completed", "conclusion": "success"},
+    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
     {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
     {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
-    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
     {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
     {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
   ]
 }
+```
+
+Implementation CI on `3faf532763ae073538a6547b71a68d788c15b52b` was also `success`: https://github.com/drkwv34/lodestone-kb/actions/runs/39147658411
+
+## Merge and archive
+
+Merge commit: `9937badb63b6c74be7b0da678f4ec8213c817688`. Author and committer are Christian Agila
+<87576768+drkwv34@users.noreply.github.com>. No co-author trailers.
+
+```text
+$ git merge --no-ff feat/providers-distillation -m "Merge pull request #5 from drkwv34/feat/providers-distillation"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git rev-parse HEAD
+9937badb63b6c74be7b0da678f4ec8213c817688
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   376de6a..9937bad  main -> main
+```
+
+```text
+$ openspec archive add-providers-and-distillation --yes
+Task status: ✓ Complete
+
+Specs to update:
+  providers-distillation: create
+Applying changes to openspec/specs/providers-distillation/spec.md:
+  + 10 added
+Totals: + 10, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'add-providers-and-distillation' archived as '2026-10-18-add-providers-and-distillation'.
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/chunkers-sources
+✓ spec/lexical-search
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/workspace-foundation
+Totals: 5 passed, 0 failed (5 items)
+```
+
+```text
+$ openspec list
+No active changes found.
 ```
