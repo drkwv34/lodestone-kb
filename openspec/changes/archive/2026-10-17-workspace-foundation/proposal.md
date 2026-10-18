@@ -1,16 +1,16 @@
 ## Why
 
-Day 1 needs an installable, offline foundation before ingestion or retrieval can
-be added. Preserve the five supplied specifications before implementation.
+The workspace foundation needs an installable, offline base before ingestion or
+retrieval can be added. Preserve the five supplied specifications before implementation.
 
 ## What Changes
 
 - Implement FR-001 workspace initialisation and FR-002 typed TOML configuration.
 - Implement FR-082 forward-only migrations, architecture 7.1 without eval tables.
 - Implement FR-080 partially: Python, SQLite, FTS5 and schema diagnostics only.
-- Establish NFR-011 portability, NFR-012 Day 1 gates (70% coverage, strict typing,
+- Establish NFR-011 portability, NFR-012 initial gates (70% coverage, strict typing,
   Ruff, import boundaries, 500-line maximum), and NFR-017 Apache-2.0 licensing.
-- Add config display redaction as the Day 1 FR-005 preview.
+- Add config display redaction as the workspace-foundation FR-005 preview.
 
 ## Capabilities
 

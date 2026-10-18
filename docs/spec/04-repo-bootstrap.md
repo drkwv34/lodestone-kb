@@ -1,6 +1,6 @@
 # 04 - Repository bootstrap: lodestone-kb
 
-Created by the owner or REPO-BOT *before* Day 1 (the research session did not create any repo). Nothing here is to be published to PyPI automatically.
+Created by the owner *before* the workspace foundation (the research session did not create any repo). Nothing here is to be published to PyPI automatically.
 
 ## 1. Identity
 - GitHub repo: `drkwv34/lodestone-kb` (checked 2026-10-16: GitHub API returns 404 = free; PyPI `lodestone-kb` = 404 = free).
@@ -78,7 +78,7 @@ strict = true
 markers = ["perf: performance tests", "network: needs network (opt-in)"]
 addopts = "-q --strict-markers -m 'not perf and not network'"
 ```
-(Dependency versions are lower bounds. Checked on PyPI 2026-10-16: mcp 2.3.0, sqlite-vec 0.1.9, pathspec 1.1.1, typer 0.27.3, hatchling 1.32.4; npm `@fission-ai/openspec` 1.14.2. Day 1 must re-verify; Day 9 must check the current `mcp` SDK server API (it is at major version 2, so `FastMCP` import paths may differ from older docs) and record any deviation in `docs/decisions/`. FTS5 `tokenchars '_-'` tokenizer syntax was smoke-tested on SQLite 3.46.1.)
+(Dependency versions are lower bounds. Checked on PyPI 2026-10-16: mcp 2.3.0, sqlite-vec 0.1.9, pathspec 1.1.1, typer 0.27.3, hatchling 1.32.4; npm `@fission-ai/openspec` 1.14.2. Workspace foundation must re-verify; MCP and ask must check the current `mcp` SDK server API (it is at major version 2, so `FastMCP` import paths may differ from older docs) and record any deviation in `docs/decisions/`. FTS5 `tokenchars '_-'` tokenizer syntax was smoke-tested on SQLite 3.46.1.)
 
 ## 4. CI workflow (`.github/workflows/ci.yml`)
 ```yaml
@@ -133,7 +133,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
-      - run: npm i -g @fission-ai/openspec   # verify the package name on Day 1; record in decisions if different
+      - run: npm i -g @fission-ai/openspec   # verify the package name during workspace foundation; record in decisions if different
       - run: openspec validate --all --strict
   licenses:
     runs-on: ubuntu-latest
@@ -143,7 +143,7 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -e ".[dev,vec]" && pip-licenses --format=markdown --fail-on="GPL;AGPL"
 ```
-Coverage gate is raised per the delivery plan (set repo variable `COV_GATE` to 70, 80, 85 on Days 1, 4, 9). The `release.yml` workflow (Day 13) builds wheel+sdist on tags `v*`, uploads them as workflow artifacts and a draft GitHub release; it contains **no** PyPI publish step.
+Coverage gate is raised per the delivery plan (set repo variable `COV_GATE` to 70, 80, 85 at workspace foundation, distillation cards, and MCP and ask). The `release.yml` workflow (docs and packaging) builds wheel+sdist on tags `v*`, uploads them as workflow artifacts and a draft GitHub release; it contains **no** PyPI publish step.
 
 ## 5. README skeleton
 ```markdown
@@ -172,13 +172,13 @@ lodestone sync --offline && lodestone search "ERR_MANIFEST_TIMEOUT" --explain
 
 ## 6. Contribution docs (content outline)
 - `CONTRIBUTING.md`: dev setup (`pip install -e ".[dev,vec]"`, `pre-commit install`), running tests (`pytest`, `pytest -m perf`), requirement-ID test naming, OpenSpec change workflow, commit style, "no paid APIs in tests", how to write a connector (link to `docs/connectors.md`).
-- `CODE_OF_CONDUCT.md`: Contributor Covenant 2.1 (verbatim text to be copied on Day 1).
+- `CODE_OF_CONDUCT.md`: Contributor Covenant 2.1 (verbatim text to be copied during workspace foundation).
 - `SECURITY.md`: private reporting via GitHub security advisories; scope (path jail, injection, secrets); supported versions table.
 - Issue/PR templates: bug template asks for `lodestone doctor` output; PR template carries the DoD checklist (E1-E5).
 
-## 7. Day-0 checklist (owner or REPO-BOT, one session before Day 1)
-1. Create empty public repo `drkwv34/lodestone-kb` (no auto-generated license; Day 1 adds Apache-2.0). *This is an irreversible public action: needs the owner's approval.*
+## 7. Pre-implementation checklist (owner, one session before workspace foundation)
+1. Create empty public repo `drkwv34/lodestone-kb` (no auto-generated license; workspace foundation adds Apache-2.0). *This is an irreversible public action: needs the owner's approval.*
 2. Add `docs/spec/` with the five documents + `docs/PROGRESS.md` (empty table).
 3. Set repo variable `COV_GATE=70`; enable Actions; set the commit identity for the repo to the owner's.
-4. Confirm provider secrets are NOT required (none for CI). Optional: `CEREBRAS_API_KEY` as a repository secret only if the owner wants real benchmark runs on Day 13.
-5. Start Day 1 the next morning.
+4. Confirm provider secrets are NOT required (none for CI). Optional: `CEREBRAS_API_KEY` as a repository secret only if the owner wants real benchmark runs during docs and packaging.
+5. Start the workspace foundation next.

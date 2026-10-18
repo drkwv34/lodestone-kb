@@ -13,8 +13,8 @@ and Windows Python 3.12 smoke tests.
 - **WHEN** each matrix job executes
 - **THEN** init, doctor, config display and packaged migration resources work
 
-### Requirement: NFR-012 Day 1 quality gates
-CI SHALL enforce "NFR-012" at its Day 1 ramp: coverage at least 70%, mypy --strict,
+### Requirement: NFR-012 initial quality gates
+CI SHALL enforce "NFR-012" at its initial ramp: coverage at least 70%, mypy --strict,
 Ruff lint and formatting, import boundaries, and modules no longer than 500 lines.
 
 #### Scenario: Quality regression

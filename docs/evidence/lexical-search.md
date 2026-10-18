@@ -1,10 +1,11 @@
-# Day 2 evidence — lexical search
+# Lexical search evidence
 
 Scope: FR-010 (md/txt/rst), FR-014 (hash skeleton), FR-030, FR-032
 (infrastructure and requested rare lane), FR-041 (source/kind only).
 Base: latest main `2aa63e92f3052e91a3eb4e2cba60545671d8ac41`, including
-Day 1 archive/evidence commits after the `day-1` merge tag.
-Implementation branch and OpenSpec change: `day-2-lexical-search`.
+workspace-foundation archive/evidence commits after that feature's merge-commit tag.
+Implementation branch and OpenSpec change used the historical slug recorded in
+the command transcripts below.
 The original implementation run stopped at the green PR head. The owner authorised
 merge, archive and tagging in the 2026-10-17 follow-up; completion output follows below.
 
@@ -108,7 +109,7 @@ CI pytest output (Linux / Python 3.12):
 ## E3 — author and committer
 
 Captured at implementation head `cc4d23c`; final-head log is appended in PR #2.
-The range intentionally includes main's two post-Day-1 evidence/archive commits.
+The range intentionally includes main's two post-foundation evidence/archive commits.
 
 ```text
 $ git log day-1..HEAD --format='%h %an <%ae> | %cn <%ce>'
@@ -178,7 +179,7 @@ Required test coverage of 70% reached. Total coverage: 96.15%
   (98 source/kind/lane combinations, literal SQL-injection-like filter values,
   and filtering before LIMIT), `test_fr_010_fr_030_fr_041_sync_search_smoke`.
 - [x] CLI and read-only lifecycle:
-  `test_fr_010_fr_030_cli_errors_and_readonly_search`; existing Day 1 tests retained
+  `test_fr_010_fr_030_cli_errors_and_readonly_search`; existing workspace-foundation tests retained
   and their schema-version assertions advanced without reducing the checks.
 
 ## E6 — terminal demo
@@ -669,8 +670,8 @@ $ git log day-1..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
 0
 ```
 
-Archive location: `openspec/changes/archive/2026-10-17-day-2-lexical-search/`.
-The annotated `day-2` tag was published and resolves to merge commit
+Archive location: `openspec/changes/archive/2026-10-17-lexical-search/`.
+The annotated merge-commit tag was published and resolves to merge commit
 `c8f34aedea0b12a38b378e83fa3457db97037a30`, not either later archive/evidence commit.
 
 ## Published archive and merge-commit tag
@@ -695,5 +696,5 @@ $ git rev-parse day-2^{commit}
 c8f34aedea0b12a38b378e83fa3457db97037a30
 ```
 
-Day 2 is complete. The final documentation commit records these already-successful
+Lexical search is complete. The final documentation commit records these already-successful
 pushes; the chat delivery includes the full authorship log through that commit.

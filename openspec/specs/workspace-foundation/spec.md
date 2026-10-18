@@ -42,7 +42,7 @@ apply transactionally and opening a newer schema fails before mutation.
 - **THEN** a clear newer-schema error is returned and the database is preserved
 
 ### Requirement: FR-080 local diagnostics subset
-The CLI SHALL implement "FR-080" partially on Day 1: report Python/SQLite versions,
+The CLI SHALL implement "FR-080" partially in the workspace foundation: report Python/SQLite versions,
 FTS5 availability, configuration errors and database schema; exit 1 on runtime errors.
 
 #### Scenario: FTS5 unavailable

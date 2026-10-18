@@ -429,7 +429,7 @@ Performance design: all lanes are indexed SQL queries; candidate pool small (20)
 - **Compatibility**: semver for SDK, MCP tool schemas and JSON schemas (`*.v1`); breaking changes bump the schema suffix.
 
 ## 10. Deployment
-Distribution: `pip install lodestone-kb` (extras `[vec]`, `[bench]`, `[dev]`); entry points `lodestone` CLI. GitHub Actions: lint, type, test matrix, perf (non-blocking on macOS/Windows), build wheel, docs link check; release workflow builds artifacts on tag but **does not publish to PyPI automatically** (manual decision by the owner). No Docker needed; optional `Dockerfile` for MCP stdio use (Day 13).
+Distribution: `pip install lodestone-kb` (extras `[vec]`, `[bench]`, `[dev]`); entry points `lodestone` CLI. GitHub Actions: lint, type, test matrix, perf (non-blocking on macOS/Windows), build wheel, docs link check; release workflow builds artifacts on tag but **does not publish to PyPI automatically** (manual decision by the owner). No Docker needed; optional `Dockerfile` for MCP stdio use during docs and packaging.
 
 ## 11. Architecture decision records
 

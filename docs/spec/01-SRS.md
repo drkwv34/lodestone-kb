@@ -46,7 +46,7 @@ Standalone Python package + CLI + MCP server. No server infrastructure. One SQLi
 - **P2 Ravi, ML/search engineer**: evaluating RAG options; wants a reproducible, honest comparison on his corpus with confidence intervals.
 - **P3 Mei, solo developer / researcher**: laptop only, no budget, wants offline notes search with citations.
 - **P4 Connector author**: adds a source via a plugin.
-- **P5 Maintainer/agent** (REPO-BOT): implements the repo day by day, needs unambiguous requirements and tests.
+- **P5 Maintainer**: implements features against unambiguous requirements and tests.
 
 ### 2.4 Operating environment
 Python 3.11-3.13; Linux, macOS (CI), Windows (best effort, CI smoke); SQLite >= 3.38 with FTS5 (bundled in CPython builds; `doctor` verifies); optional `sqlite-vec`. Network only to configured providers.
@@ -54,7 +54,7 @@ Python 3.11-3.13; Linux, macOS (CI), Windows (best effort, CI smoke); SQLite >= 
 ### 2.5 Constraints
 C-1 License of the project Apache-2.0; all dependencies must be Apache-2.0/MIT/BSD-compatible.
 C-2 No paid API required to run CI or the default test suite (FakeLLM/FakeEmbedder).
-C-3 One developer-agent session = one delivery day (see delivery plan); modules must be independently testable.
+C-3 One contributor session = one feature from the delivery plan; modules must be independently testable.
 C-4 No telemetry. No network calls unless the user configures a provider and runs a command that needs it.
 C-5 Core runtime dependencies <= 8 (typer, httpx, pydantic, mcp, plus 4 more at most); pure-Python wheel.
 
@@ -230,7 +230,7 @@ Web UI; multi-user auth/RBAC; hosted service; live Slack/Jira/Confluence connect
 | R-2 | Synthetic questions leak lexical overlap and flatter BM25 | H/M | Leakage score + filter (FR-072); paraphrase category; caveats |
 | R-3 | Distillation hallucinates facts | M/H | Provenance (FR-024); raw text always returned; cards used for retrieval, `ask` cites raw spans |
 | R-4 | LLM ingest cost surprises users | M/M | Cost accounting (FR-026), `--dry-run` estimating tokens, heuristic fallback, caching |
-| R-5 | 13-day schedule slips | M/M | Strict MVP boundary (S/C items are droppable), daily DoD, buffer day 14 |
+| R-5 | Feature roadmap slips | M/M | Strict MVP boundary (S/C items are droppable), per-feature DoD, buffer/release-candidate slot |
 | R-6 | Hash embedder results mistaken for real | M/H | Mandatory caveat, docs, report flag |
 | R-7 | sqlite-vec packaging issues | M/L | Optional extra + brute-force fallback with parity test |
 | R-8 | Agentic strategies non-deterministic | H/M | temperature 0, 3 reps, CIs, caching |
@@ -238,10 +238,10 @@ Web UI; multi-user auth/RBAC; hosted service; live Slack/Jira/Confluence connect
 | R-10 | Windows path/regex issues | M/L | Best-effort smoke tests only |
 
 ## 11. MVP boundary (decision rule)
-MVP = all **M** requirements. **S** requirements are done in the order listed on Day 13-14 if time remains; **C** is never started before v0.1.0 is tagged. A requirement may be downgraded only via a recorded decision in `docs/decisions/`.
+MVP = all **M** requirements. **S** requirements are done in the order listed during docs/packaging and the buffer/release-candidate slot if time remains; **C** is never started before v0.1.0 is tagged. A requirement may be downgraded only via a recorded decision in `docs/decisions/`.
 
-## 12. Traceability matrix (requirement -> design -> test -> day)
-| Req | Architecture section | Test file (planned) | Day |
+## 12. Traceability matrix (requirement -> design -> test -> feature)
+| Req | Architecture section | Test file (planned) | Feature |
 |---|---|---|---|
 | FR-001,002,003,004,005 | 3.1 config, 3.2 CLI | tests/test_config.py, tests/e2e/test_init.py | 1, 3 |
 | FR-010,014,015,016 | 3.3 connectors, chunkers | tests/test_files_connector.py, test_chunkers.py | 2, 3 |

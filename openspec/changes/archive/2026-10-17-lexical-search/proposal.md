@@ -1,6 +1,7 @@
 ## Why
-Day 1 creates an offline workspace but cannot ingest or retrieve documents. Day 2
-adds a local lexical path over text corpora while preserving the existing foundation.
+The workspace foundation creates an offline workspace but cannot ingest or retrieve
+documents. Lexical search adds a local lexical path over text corpora while preserving
+the existing foundation.
 
 ## What Changes
 - Implement "FR-010" for md/txt/rst: jailed, bounded discovery with globs and gitignore.
@@ -17,5 +18,5 @@ adds a local lexical path over text corpora while preserving the existing founda
 ## Impact
 Existing schema upgrades forward without editing 0001. No paid APIs or new runtime
 dependencies. Chunking, complete incremental deletion/pruning, projects, cards,
-fusion, SDK and further filters retain their scheduled later-day scope. The change
+fusion, SDK and further filters retain their scheduled later-feature scope. The change
 stays active until the owner authorises merge; archive/tag follow in a later run.
