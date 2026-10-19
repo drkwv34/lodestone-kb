@@ -112,6 +112,7 @@ Recorded after the feature commits on `feat/threads-bursts`:
 
 ```text
 $ git log 12713b4..HEAD --format='%h %an <%ae> | %cn <%ce>'
+6475886 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 5e3bbe6 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 85be147 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 c2d5fe5 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -161,4 +162,31 @@ After appending a message, the thread `id` stayed `1`, `updated_at` moved to the
 
 ## CI
 
-Pending PR-head CI. This section will be replaced with the run URL and `conclusion: success` for the PR head SHA once GitHub Actions is green. Do not merge in this run.
+PR head `6475886d486d87c2c4e8221ebe94151cdc3de6f3`. All nine jobs `completed` / `success`.
+
+```text
+https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808
+conclusion: success
+```
+
+```json
+{
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808",
+  "head_sha": "6475886d486d87c2c4e8221ebe94151cdc3de6f3",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "build", "status": "completed", "conclusion": "success"},
+    {"name": "openspec", "status": "completed", "conclusion": "success"},
+    {"name": "licenses", "status": "completed", "conclusion": "success"},
+    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
+    {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
+    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
+  ]
+}
+```
+
+Do not merge in this run. Archive after merge as a direct commit on main.
