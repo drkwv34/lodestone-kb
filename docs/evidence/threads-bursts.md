@@ -112,6 +112,7 @@ Recorded after the feature commits on `feat/threads-bursts`:
 
 ```text
 $ git log 12713b4..HEAD --format='%h %an <%ae> | %cn <%ce>'
+5de5c9a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 6475886 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 5e3bbe6 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 85be147 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -162,17 +163,17 @@ After appending a message, the thread `id` stayed `1`, `updated_at` moved to the
 
 ## CI
 
-PR head `6475886d486d87c2c4e8221ebe94151cdc3de6f3`. All nine jobs `completed` / `success`.
+Final PR head `5de5c9a4ec422d70d9331897164bb28bf139cfe2`. All nine jobs `completed` / `success`.
 
 ```text
-https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808
+https://github.com/drkwv34/lodestone-kb/actions/runs/39290511302
 conclusion: success
 ```
 
 ```json
 {
-  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808",
-  "head_sha": "6475886d486d87c2c4e8221ebe94151cdc3de6f3",
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39290511302",
+  "head_sha": "5de5c9a4ec422d70d9331897164bb28bf139cfe2",
   "status": "completed",
   "conclusion": "success",
   "jobs": [
@@ -188,5 +189,7 @@ conclusion: success
   ]
 }
 ```
+
+Implementation/docs CI on `6475886d486d87c2c4e8221ebe94151cdc3de6f3` was also `success`: https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808
 
 Do not merge in this run. Archive after merge as a direct commit on main.
