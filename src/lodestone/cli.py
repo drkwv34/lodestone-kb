@@ -104,7 +104,7 @@ def sync(
     provider: Annotated[str | None, typer.Option(help="fake or config.")] = None,
     refresh_cards: Annotated[bool, typer.Option("--refresh-cards")] = False,
 ) -> None:
-    """Sync structural document/code records; optionally purge missing files."""
+    """Sync files and thread JSONL sources; optionally purge missing items."""
     cfg = configuration(config)
     try:
         report = sync_workspace(
@@ -207,7 +207,7 @@ def source_add(
     project: Annotated[str | None, typer.Option()] = None,
     config: ConfigOption = Path("lodestone.toml"),
 ) -> None:
-    """Register a file source and include it in the selected project."""
+    """Register a files or threads source and include it in the selected project."""
     configuration(config)
     try:
         from lodestone.connectors.files import validate_patterns

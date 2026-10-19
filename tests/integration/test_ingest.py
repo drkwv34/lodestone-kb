@@ -69,7 +69,7 @@ def test_fr_014_invalid_source_does_not_register(
     assert list(database.execute("SELECT * FROM sources")) == []
     with pytest.raises(ValueError, match="unique"):
         sync(database, Config(sources=[source, source]))
-    with pytest.raises(ValueError, match="files sources"):
+    with pytest.raises(ValueError, match="threads source path must be a file"):
         sync(database, Config(sources=[Source(name="x", kind="threads", path=tmp_path)]))
 
 

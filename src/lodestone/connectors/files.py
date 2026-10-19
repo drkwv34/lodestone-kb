@@ -21,6 +21,15 @@ MAX_IGNORE_BYTES = 1024 * 1024
 
 
 @dataclass(frozen=True)
+class Message:
+    id: str
+    author: str
+    ts: datetime
+    text: str
+    reactions: int = 0
+
+
+@dataclass(frozen=True)
 class RawItem:
     ext_id: str
     kind_hint: str
@@ -28,6 +37,7 @@ class RawItem:
     text: str
     metadata: dict[str, str]
     updated_at: datetime
+    messages: tuple[Message, ...] | None = None
 
 
 @dataclass(frozen=True)

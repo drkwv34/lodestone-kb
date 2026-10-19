@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -66,12 +67,12 @@ def apply_cards(
     model = chat.model if chat is not None else "heuristic"
     kinds = set(config.cards.kinds)
     rows = connection.execute(
-        "SELECT id,kind,title,text,content_hash,card_json,card_method,norm_text "
+        "SELECT id,kind,title,text,content_hash,card_json,card_method,norm_text,metadata_json "
         "FROM records WHERE (id=? OR parent_id=?) AND tombstoned=0",
         (parent_id, parent_id),
     ).fetchall()
     for row in rows:
-        record_id, kind, title, text, digest, stored, method, norm = row
+        record_id, kind, title, text, digest, stored, method, norm, metadata_json = row
         if kind not in kinds:
             continue
         key = cache_key(str(digest), config.cards.prompt_version, model)
@@ -88,7 +89,15 @@ def apply_cards(
                 _write(connection, int(record_id), cached[0], str(cached[1]), rendered)
                 continue
         stats.cache_misses += 1
-        card, used = _generate(str(title), str(text), str(kind), config, chat, connection)
+        card, used = _generate(
+            str(title),
+            str(text),
+            str(kind),
+            config,
+            chat,
+            connection,
+            messages=_thread_messages(str(kind), str(metadata_json or "")),
+        )
         payload = card.model_dump_json()
         rendered = render_norm(card, config.cards.norm_format)
         _write(connection, int(record_id), payload, used, rendered)
@@ -134,6 +143,31 @@ def requeue_embeddings(connection: sqlite3.Connection, source: str) -> None:
     connection.execute("UPDATE meta SET value=? WHERE key='embed_source'", (source,))
 
 
+def _thread_messages(kind: str, metadata_json: str) -> list[tuple[str, str]] | None:
+    if kind != "thread":
+        return None
+    try:
+        data = json.loads(metadata_json) if metadata_json else {}
+    except json.JSONDecodeError:
+        return None
+    blob = data.get("messages_json") if isinstance(data, dict) else None
+    raw: object = None
+    if isinstance(blob, str):
+        try:
+            raw = json.loads(blob)
+        except json.JSONDecodeError:
+            return None
+    elif isinstance(data, dict):
+        raw = data.get("messages")
+    if not isinstance(raw, list):
+        return None
+    return [
+        (str(item.get("id", "")), str(item.get("text", "")))
+        for item in raw
+        if isinstance(item, dict)
+    ]
+
+
 def _generate(
     title: str,
     text: str,
@@ -141,9 +175,12 @@ def _generate(
     config: Config,
     chat: Chat | None,
     connection: sqlite3.Connection,
+    messages: list[tuple[str, str]] | None = None,
 ) -> tuple[Card, str]:
     if chat is None:
-        return heuristic_card(title, text, connection=connection, kind=kind), "heuristic"
+        return heuristic_card(
+            title, text, messages=messages, connection=connection, kind=kind
+        ), "heuristic"
     return llm_card(
         title,
         text,
@@ -151,6 +188,7 @@ def _generate(
         chat=chat,
         max_input_chars=config.cards.max_input_chars,
         connection=connection,
+        messages=messages,
     )
 
 
