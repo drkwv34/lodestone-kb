@@ -30,7 +30,7 @@ Changes:
   add-threads-and-bursts     ✓ Complete
 ```
 
-Archive after merge as a direct commit on main.
+Archived on main as `2026-10-19-add-threads-and-bursts`.
 
 ## Requirement checklist
 
@@ -162,17 +162,17 @@ After appending a message, the thread `id` stayed `1`, `updated_at` moved to the
 
 ## CI
 
-PR head `6475886d486d87c2c4e8221ebe94151cdc3de6f3`. All nine jobs `completed` / `success`.
+Final PR head `5de5c9a4ec422d70d9331897164bb28bf139cfe2`. All nine jobs `completed` / `success`.
 
 ```text
-https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808
+https://github.com/drkwv34/lodestone-kb/actions/runs/39290511302
 conclusion: success
 ```
 
 ```json
 {
-  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808",
-  "head_sha": "6475886d486d87c2c4e8221ebe94151cdc3de6f3",
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39290511302",
+  "head_sha": "5de5c9a4ec422d70d9331897164bb28bf139cfe2",
   "status": "completed",
   "conclusion": "success",
   "jobs": [
@@ -181,12 +181,62 @@ conclusion: success
     {"name": "licenses", "status": "completed", "conclusion": "success"},
     {"name": "lint-type", "status": "completed", "conclusion": "success"},
     {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
-    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
+    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"},
     {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
     {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
-    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
+    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"}
   ]
 }
 ```
 
-Do not merge in this run. Archive after merge as a direct commit on main.
+Implementation CI on `6475886d486d87c2c4e8221ebe94151cdc3de6f3` was also `success`: https://github.com/drkwv34/lodestone-kb/actions/runs/39289118808
+
+## Merge and archive
+
+Merge commit: `a92f9af1041c4abd6243a8f6dca0fa6d6cc350e3`. Author and committer are Christian Agila
+<87576768+drkwv34@users.noreply.github.com>. No co-author trailers.
+
+```text
+$ git merge --no-ff feat/threads-bursts -m "Merge pull request #6 from drkwv34/feat/threads-bursts"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git rev-parse HEAD
+a92f9af1041c4abd6243a8f6dca0fa6d6cc350e3
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   12713b4..a92f9af  main -> main
+```
+
+```text
+$ openspec archive add-threads-and-bursts --yes
+Task status: ✓ Complete
+
+Specs to update:
+  threads-bursts: create
+Applying changes to openspec/specs/threads-bursts/spec.md:
+  + 4 added
+Totals: + 4, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'add-threads-and-bursts' archived as '2026-10-19-add-threads-and-bursts'.
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/chunkers-sources
+✓ spec/lexical-search
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/threads-bursts
+✓ spec/workspace-foundation
+Totals: 6 passed, 0 failed (6 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
