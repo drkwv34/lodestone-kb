@@ -224,7 +224,7 @@ def test_fr_004_register_thread_source_without_ingesting(tmp_path: Path) -> None
     assert result.exit_code == 0, result.output
     assert load_config(path).sources[0].kind == "threads"
     result = runner.invoke(app, ["source", "sync", "support", *args])
-    assert result.exit_code == 2
-    assert "files sources only" in result.output
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["processed"] == 0
     result = runner.invoke(app, ["source", "remove", "support", *args])
     assert result.exit_code == 0, result.output
