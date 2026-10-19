@@ -1,0 +1,26 @@
+[
+  {
+    "type": "message",
+    "subtype": "channel_join",
+    "user": "UMAYA",
+    "text": "maya has joined the channel",
+    "ts": "1719830000.000000"
+  },
+  {
+    "type": "message",
+    "user": "UMAYA",
+    "text": "Restore stalls after manifest load. Is NFS stalled?",
+    "ts": "1719830040.000100",
+    "thread_ts": "1719830040.000100",
+    "client_msg_id": "m1"
+  },
+  {
+    "type": "message",
+    "user": "UOWEN",
+    "text": "Setting CKPT_PREFETCH=4 makes it complete. The default is too high for the NFS mount.",
+    "ts": "1719830100.000200",
+    "thread_ts": "1719830040.000100",
+    "client_msg_id": "m2",
+    "reactions": [{"name": "+1", "count": 2}]
+  }
+]
