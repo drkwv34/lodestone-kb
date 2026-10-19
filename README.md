@@ -7,9 +7,9 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Python 3.11–3.13](https://img.shields.io/badge/python-3.11–3.13-blue)
 
-Local Markdown/text and code ingestion, structural chunking and lexical search are
-available through `init`, `doctor`, `config show`, `source add/list/remove/sync`,
-`sync` and `search`.
+Local Markdown/text, code and JSONL thread ingestion, structural chunking,
+distilled cards and lexical search are available through `init`, `doctor`,
+`config show`, `source add/list/remove/sync`, `sync` and `search`.
 No automatic PyPI publishing is configured.
 
 ## Why
@@ -69,8 +69,9 @@ contributions. Source mutations re-emit valid TOML values and replace the file
 atomically; formatting and comments are not retained.
 
 Projects are explicit source sets. `source add` includes a source in the selected
-project. Thread exports can also be registered with `--kind threads`;
-their ingestion is not yet available. Edit TOML to create projects and share sources:
+project. Thread JSONL sources use `--kind threads`. Convert a Slack export with
+`examples/slack_export_to_jsonl.py`, then sync. Qualifying same-author bursts are
+stored as `kind=burst` children. Edit TOML to create projects and share sources:
 
 ```toml
 [[projects]]
@@ -96,7 +97,7 @@ provides a corpus-relative alternative. Search opens the database read-only;
 |---|---|---|
 | Typed TOML, schema migrations, local diagnostics | Available | Expanded diagnostics |
 | Lexical indexing and search | Available: raw/rare lanes | Hybrid fusion |
-| Thread cards, burst records, recency | Planned | Cards and recency |
+| Thread cards, burst records, recency | Available: JSONL threads, cards, bursts | Recency decay |
 | Read-only MCP for coding agents | Planned | MCP server |
 | Corpus-specific strategy benchmark | Planned | Strategy evaluation |
 | Tree reasoning over long documents (PageIndex style) | Out of scope | Not in MVP |
