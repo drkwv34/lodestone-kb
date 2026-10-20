@@ -8,7 +8,15 @@ from pathlib import Path
 
 import pytest
 
+from lodestone.providers.offline import set_offline
 from lodestone.storage.db import open_database
+
+
+@pytest.fixture(autouse=True)
+def _reset_offline() -> Iterator[None]:
+    set_offline(False)
+    yield
+    set_offline(False)
 
 
 @pytest.fixture

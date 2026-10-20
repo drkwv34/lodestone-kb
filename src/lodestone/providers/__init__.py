@@ -9,6 +9,7 @@ from typing import Protocol
 from lodestone.config import Config
 from lodestone.providers.chat import ChatResult, OpenAIChat, ProviderError, extract_json
 from lodestone.providers.fake import FakeLLM
+from lodestone.providers.offline import OfflineError, is_offline, offline_scope, reject_remote
 
 LogFn = Callable[[str, ChatResult], None]
 
@@ -22,7 +23,13 @@ class Chat(Protocol):
     ) -> ChatResult: ...
 
 
-def make_chat(config: Config, provider: str | None = None) -> Chat | None:
+def make_chat(config: Config, provider: str | None = None, *, offline: bool = False) -> Chat | None:
+    if offline or config.offline or is_offline():
+        if provider == "config":
+            raise OfflineError("remote provider is disabled while offline")
+        if provider == "fake":
+            return FakeLLM()
+        return None
     if provider is None:
         return None
     if provider == "fake":
@@ -38,8 +45,12 @@ __all__ = [
     "Chat",
     "ChatResult",
     "FakeLLM",
+    "OfflineError",
     "OpenAIChat",
     "ProviderError",
     "extract_json",
+    "is_offline",
     "make_chat",
+    "offline_scope",
+    "reject_remote",
 ]

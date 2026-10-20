@@ -22,10 +22,11 @@ src/lodestone/          import package (CLI entry: lodestone.cli:app)
   storage/              SQLite, migrations, records, FTS, costs
   connectors/           files and JSONL threads
   chunking/             markdown/text and code
-  ingest/               sync pipeline and bursts
+  ingest/               sync pipeline, bursts and embedding writes
   distill/              cards (heuristic and optional LLM)
-  lanes/                retrieval (lexical FTS lanes)
-  providers/            optional chat HTTP client and FakeLLM
+  lanes/                retrieval (lexical FTS and optional vec lanes)
+  vectors/              hash and OpenAI-compatible embedders, search backends
+  providers/            optional chat HTTP client, FakeLLM and offline guard
   tokenize.py
   prompts/              card.v1 and later prompt files
 tests/                  unit, integration, e2e, fixtures
@@ -44,7 +45,7 @@ imports `lodestone.cli`.
 Import-linter contracts in `importlinter.ini` are the enforceable graph:
 
 - Layers: `cli` → `workspace` → `storage` → `config`
-- Lexical graph: `cli` → `workspace` → `ingest | lanes` → `distill` →
+- Lexical graph: `cli` → `workspace` → `ingest | lanes` → `distill | vectors` →
   `providers | chunking | connectors | storage` → `config_io` →
   `config | tokenize`
 

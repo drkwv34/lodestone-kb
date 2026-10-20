@@ -14,6 +14,7 @@ from typing import Self
 import httpx
 
 from lodestone.config import LLM
+from lodestone.providers.offline import reject_remote
 
 RETRY_STATUSES = {429, 500, 502, 503, 504}
 BACKOFF_BASE = 0.5
@@ -64,6 +65,7 @@ class OpenAIChat:
         transport: httpx.BaseTransport | None = None,
         log: Callable[[str, ChatResult], None] | None = None,
     ) -> None:
+        reject_remote("provider")
         self.model = model
         self.api_key = api_key
         self.timeout_s = timeout_s
@@ -103,6 +105,7 @@ class OpenAIChat:
         }
         if json_mode if json_mode is not None else self.json_mode:
             payload["response_format"] = {"type": "json_object"}
+        reject_remote("provider")
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
             started = time.monotonic()

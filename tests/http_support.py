@@ -20,6 +20,20 @@ class Scripted:
     headers: dict[str, str] = field(default_factory=dict)
 
 
+def embed_body(vectors: list[list[float]], *, prompt: int = 3, model: str = "test") -> bytes:
+    return json.dumps(
+        {
+            "object": "list",
+            "model": model,
+            "data": [
+                {"object": "embedding", "index": index, "embedding": vector}
+                for index, vector in enumerate(vectors)
+            ],
+            "usage": {"prompt_tokens": prompt, "total_tokens": prompt},
+        }
+    ).encode()
+
+
 def chat_body(content: str, *, prompt: int = 3, completion: int = 5, model: str = "test") -> bytes:
     return json.dumps(
         {
