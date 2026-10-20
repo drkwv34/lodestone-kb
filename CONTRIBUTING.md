@@ -1,5 +1,8 @@
 # Contributing
 
+See [AGENTS.md](AGENTS.md) for layout, architecture boundaries, exact commands,
+OpenSpec workflow and project conventions.
+
 Use Python 3.11+ and a virtual environment:
 
 ```sh
