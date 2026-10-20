@@ -23,9 +23,14 @@ from lodestone.distill.apply import (
     requeue_embeddings,
 )
 from lodestone.ingest.bursts import qualifying_bursts
+from lodestone.ingest.embeddings import apply_embeddings
 from lodestone.providers import Chat
+from lodestone.providers.chat import ChatResult
+from lodestone.storage.costs import log_call
 from lodestone.storage.registry import reconcile, register
 from lodestone.storage.terms import idf as term_idf
+from lodestone.vectors.embedder import Embedder
+from lodestone.vectors.openai_compat import OpenAICompatEmbedder
 
 CHUNKER_VERSION = markdown.VERSION + "/" + code.VERSION
 THREAD_VERSION = "thread-v1"
@@ -131,6 +136,27 @@ def upsert(
     return True
 
 
+def _bind_embed_log(embedder: Embedder | None, connection: sqlite3.Connection) -> None:
+    if not isinstance(embedder, OpenAICompatEmbedder):
+        return
+    previous = embedder.log
+
+    def log(op: str, result: ChatResult) -> None:
+        log_call(
+            connection,
+            op=op,
+            model=result.model,
+            in_tokens=result.in_tokens,
+            out_tokens=result.out_tokens,
+            latency_ms=result.latency_ms,
+            ok=result.ok,
+        )
+        if callable(previous):
+            previous(op, result)
+
+    embedder.log = log
+
+
 def ingest_thread(
     connection: sqlite3.Connection,
     source_id: int,
@@ -140,6 +166,7 @@ def ingest_thread(
     stats: CardStats,
     *,
     refresh_cards: bool,
+    embedder: Embedder | None = None,
 ) -> bool:
     version = THREAD_VERSION + ":thread"
     digest = content_hash(item.text, version)
@@ -150,6 +177,13 @@ def ingest_thread(
     if existing and existing[1] == digest and not existing[2]:
         with connection:
             apply_cards(connection, int(existing[0]), config, chat, stats, refresh=refresh_cards)
+            apply_embeddings(
+                connection,
+                embedder,
+                config.embed.source,
+                parent_id=int(existing[0]),
+                batch_size=config.embed.batch_size,
+            )
         return False
     messages = item.messages or ()
     authors = list(dict.fromkeys(message.author for message in messages))
@@ -190,6 +224,13 @@ def ingest_thread(
         connection.execute("DELETE FROM records WHERE parent_id=?", (parent_id,))
         apply_cards(connection, parent_id, config, chat, stats, refresh=refresh_cards)
         _write_bursts(connection, source_id, parent_id, item, config, version, updated, now)
+        apply_embeddings(
+            connection,
+            embedder,
+            config.embed.source,
+            parent_id=parent_id,
+            batch_size=config.embed.batch_size,
+        )
     return True
 
 
@@ -286,6 +327,7 @@ def sync(
     prune: bool = False,
     chat: Chat | None = None,
     refresh_cards: bool = False,
+    embedder: Embedder | None = None,
 ) -> SyncReport:
     names = config.scoped_sources(project, sources)
     selected = [source for source in config.sources if source.name in names]
@@ -293,6 +335,9 @@ def sync(
     stats = CardStats()
     if chat is not None:
         bind_log(chat, connection, stats)
+    _bind_embed_log(embedder, connection)
+    with connection:
+        requeue_embeddings(connection, config.embed.source)
     for source in selected:
         connector = connector_for(source)
         items = connector.discover(source)
@@ -305,7 +350,14 @@ def sync(
             seen.add(item.ext_id)
             if source.kind == "threads":
                 wrote = ingest_thread(
-                    connection, source_id, item, config, chat, stats, refresh_cards=refresh_cards
+                    connection,
+                    source_id,
+                    item,
+                    config,
+                    chat,
+                    stats,
+                    refresh_cards=refresh_cards,
+                    embedder=embedder,
                 )
             else:
                 wrote = upsert(connection, source_id, item, config.chunks)
@@ -319,6 +371,13 @@ def sync(
                             connection, int(parent[0]), config, chat, stats, refresh=refresh_cards
                         )
                         contextualize_children(connection, int(parent[0]), config, chat)
+                        apply_embeddings(
+                            connection,
+                            embedder,
+                            config.embed.source,
+                            parent_id=int(parent[0]),
+                            batch_size=config.embed.batch_size,
+                        )
             if wrote:
                 report.processed += 1
                 changed = True
@@ -341,7 +400,9 @@ def sync(
                     (datetime.now(UTC).isoformat(), source_id),
                 )
     with connection:
-        requeue_embeddings(connection, config.embed.source)
+        apply_embeddings(
+            connection, embedder, config.embed.source, batch_size=config.embed.batch_size
+        )
         reconcile(connection, config)
     report.llm_calls = stats.llm_calls
     report.cache_hits = stats.cache_hits
