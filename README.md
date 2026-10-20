@@ -8,9 +8,9 @@
 ![Python 3.11–3.13](https://img.shields.io/badge/python-3.11–3.13-blue)
 
 Local Markdown/text, code and JSONL thread ingestion, structural chunking,
-distilled cards and lexical search are available through `init`, `doctor`,
-`config show`, `source add/list/remove/sync`, `sync` and `search`.
-No automatic PyPI publishing is configured.
+distilled cards, lexical search and optional embeddings are available through
+`init`, `doctor`, `config show`, `source add/list/remove/sync`, `sync`,
+`search` and `reindex`. No automatic PyPI publishing is configured.
 
 ## Why
 
@@ -30,7 +30,7 @@ git clone https://github.com/drkwv34/lodestone-kb.git
 cd lodestone-kb
 python -m venv .venv
 . .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
-pip install -e .
+pip install -e '.[vec]'   # sqlite-vec extra is optional; omit [vec] for brute-force only
 lodestone init && lodestone doctor
 lodestone config show
 ```
@@ -46,8 +46,10 @@ Register a source, then sync and search:
 ```sh
 lodestone source add wiki --kind files --path tests/fixtures/corpus --exclude 'drafts/**'
 lodestone source list
-lodestone sync
+lodestone sync --offline
 lodestone search "ERR_MANIFEST_TIMEOUT"
+lodestone search "ERR_MANIFEST_TIMEOUT" --lane vec_card --offline --explain --json
+lodestone reindex --lanes vec --offline
 lodestone search '"manifest load"' --source wiki --kind section --json
 lodestone source sync wiki --prune
 ```
@@ -86,10 +88,17 @@ sources = ["wiki"]
 comes from `workspace.default_project`. Explicit empty projects select no sources.
 When `projects` is omitted, a `default` project includes all configured sources.
 Repeatable `--source` filters intersect project membership, and `--kind` filters
-record types. Search defaults to `fts_raw`; `--lane fts_rare` selects rare terms.
-Default IDF >=4 can select no terms on tiny corpora; `[retrieval] rare_df_ratio`
-provides a corpus-relative alternative. Search opens the database read-only;
-`init` and `sync` apply forward schema migrations.
+record types. Search defaults to `fts_raw`; `--lane fts_rare` selects rare terms
+and `--lane vec_card` / `vec_chunk` use stored embeddings. Embeddings are off
+until `embed.provider` is `hash` or `openai_compat`, or until `--offline` /
+`offline = true` swaps in the 256-d hash embedder (deterministic, **not
+semantic**). Disabled or mismatched vec lanes return no hits and a notice in
+`result.notices`. `reindex --lanes vec` rebuilds embeddings from stored text
+without contacting sources. Default IDF >=4 can select no terms on tiny
+corpora; `[retrieval] rare_df_ratio` provides a corpus-relative alternative.
+Search opens the database read-only; `init` and `sync` apply forward schema
+migrations. sqlite-vec is used when the `[vec]` extra is installed, otherwise
+exact brute-force cosine (stdlib array, numpy if present).
 
 ## Features and comparison (roadmap)
 
@@ -97,6 +106,7 @@ provides a corpus-relative alternative. Search opens the database read-only;
 |---|---|---|
 | Typed TOML, schema migrations, local diagnostics | Available | Expanded diagnostics |
 | Lexical indexing and search | Available: raw/rare lanes | Hybrid fusion |
+| Optional embeddings and vec lanes | Available: hash/openai_compat, brute-force and sqlite-vec, vec_card/vec_chunk, `--offline`, `reindex --lanes vec` | Fusion weights |
 | Thread cards, burst records, recency | Available: JSONL threads, cards, bursts | Recency decay |
 | Read-only MCP for coding agents | Planned | MCP server |
 | Corpus-specific strategy benchmark | Planned | Strategy evaluation |
@@ -108,9 +118,9 @@ The read-only server and client configuration are planned.
 
 ## Benchmark
 
-`lodestone bench synth|run|report|advise` is planned. The planned
-hash embedder is deterministic and **not semantic**. Synthetic results will carry
-leakage and small-corpus caveats.
+`lodestone bench synth|run|report|advise` is planned. The hash embedder is
+deterministic and **not semantic**. Synthetic results will carry leakage and
+small-corpus caveats.
 
 ## Privacy and data flow
 
@@ -120,8 +130,10 @@ are named via `api_key_env`; literal keys are rejected. `config show` redacts
 fields containing key/token/secret. `LODESTONE_LLM_API_KEY` and
 `LODESTONE_EMBED_API_KEY` override configured environment references at runtime
 without entering TOML or config output. Keep workspace files out of version control.
-Doctor currently probes Python, SQLite, FTS5 and schema; sqlite-vec/provider/deep
-checks are deferred to the later diagnostics delivery.
+`--offline` blocks remote chat and embedding clients with `OfflineError` and
+uses the hash embedder plus heuristic cards. Doctor currently probes Python,
+SQLite, FTS5 and schema; sqlite-vec/provider/deep checks are deferred to the
+later diagnostics delivery.
 
 ## Roadmap and scope
 
@@ -134,6 +146,6 @@ live Slack ingestion, distributed storage and a web UI are out of scope.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). CI uses no paid APIs and requires strict
 typing, Ruff, import boundaries, modules <=500 lines, dependency license checks
-and at least 70% line coverage.
+and at least 80% line coverage.
 
 Licensed under [Apache-2.0](LICENSE); see [NOTICE](NOTICE).

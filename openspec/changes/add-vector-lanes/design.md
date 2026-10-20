@@ -32,7 +32,7 @@ See proposal.md. Records, cards, bursts, FTS lanes and the embeddings table alre
 
 6. **Derived-data transaction.** After cards (and on unchanged records that still need vectors), embeddings are upserted keyed by `content_hash` plus current `(model, dim)`. Record upsert already deletes embeddings for replaced parents; CASCADE covers children. Model/dim mismatch leaves old rows in place but lanes treat them as missing until `reindex --lanes vec`.
 
-7. **OfflineGuard.** `--offline` and `Config.offline` set a runtime guard: chat becomes heuristic (`make_chat` returns `None` except local FakeLLM), embedder becomes `HashEmbedder` unless `embed.provider` is `none`. Constructing or calling `OpenAIChat` / `OpenAICompatEmbedder` while the guard is on raises `OfflineError` before httpx I/O.
+7. **OfflineGuard.** `--offline` and `Config.offline` set a runtime guard: chat becomes heuristic (`make_chat` returns `None` except local FakeLLM), and the embedder always becomes `HashEmbedder` so ingest and search can demo vectors with no network even when `embed.provider` is `none`. Constructing or calling `OpenAIChat` / `OpenAICompatEmbedder` while the guard is on raises `OfflineError` before httpx I/O.
 
 8. **Import graph.** `lodestone.vectors` sits with distill: `ingest | lanes` → `distill | vectors` → `providers | storage | ...`. Vectors may import providers (retry constants, `OfflineError`) and storage helpers for packing; storage must not import vectors or lanes.
 
