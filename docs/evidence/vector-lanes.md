@@ -31,7 +31,7 @@ Changes:
   add-vector-lanes     ✓ Complete
 ```
 
-Archive after merge as a direct commit on main; not in this run.
+Archived on main as `2026-10-20-add-vector-lanes`.
 
 ## Requirement checklist
 
@@ -169,31 +169,84 @@ $ lodestone search "ERR_MANIFEST_TIMEOUT" --lane vec_card --json
 
 ## CI
 
-PR head `7523f449b8d4d9875faf2129b884e1edaca49900`. All nine jobs `completed` / `success`.
+Final PR head `abdd61ec2c87b0bd16ca498fd0f5e7adbd3830f9`. All nine jobs `completed` / `success`.
 
 ```text
-https://github.com/drkwv34/lodestone-kb/actions/runs/39460906109
+https://github.com/drkwv34/lodestone-kb/actions/runs/39461839330
 conclusion: success
 ```
 
 ```json
 {
-  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39460906109",
-  "head_sha": "7523f449b8d4d9875faf2129b884e1edaca49900",
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39461839330",
+  "head_sha": "abdd61ec2c87b0bd16ca498fd0f5e7adbd3830f9",
   "status": "completed",
   "conclusion": "success",
   "jobs": [
-    {"name": "openspec", "status": "completed", "conclusion": "success"},
     {"name": "licenses", "status": "completed", "conclusion": "success"},
     {"name": "lint-type", "status": "completed", "conclusion": "success"},
     {"name": "build", "status": "completed", "conclusion": "success"},
-    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
-    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
+    {"name": "openspec", "status": "completed", "conclusion": "success"},
     {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
     {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
     {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
   ]
 }
 ```
 
-This pull request is not merged in this run. Archive OpenSpec on main after merge.
+Implementation CI on `7523f449b8d4d9875faf2129b884e1edaca49900` was also `success`: https://github.com/drkwv34/lodestone-kb/actions/runs/39460906109
+
+Evidence-commit CI on `f9fd2eeba35f7e0ff7575339f6c30cd413cf9645` was also `success`: https://github.com/drkwv34/lodestone-kb/actions/runs/39461570042
+
+## Merge and archive
+
+Merge commit: `c548d75e9c2145666ec927985f83b2a4e22b06f0`. Author and committer are Christian Agila
+<87576768+drkwv34@users.noreply.github.com>. No co-author trailers.
+
+```text
+$ git merge --no-ff feat/vector-lanes -m "Merge pull request #8 from drkwv34/feat/vector-lanes"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git rev-parse HEAD
+c548d75e9c2145666ec927985f83b2a4e22b06f0
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   417dc27..c548d75  main -> main
+```
+
+```text
+$ openspec archive add-vector-lanes --yes
+Task status: ✓ Complete
+
+Specs to update:
+  vector-lanes: create
+Applying changes to openspec/specs/vector-lanes/spec.md:
+  + 10 added
+Totals: + 10, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'add-vector-lanes' archived as '2026-10-20-add-vector-lanes'.
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/chunkers-sources
+✓ spec/lexical-search
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 7 passed, 0 failed (7 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
