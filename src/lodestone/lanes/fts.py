@@ -12,7 +12,7 @@ from typing import Literal
 from lodestone.storage.terms import rare_terms
 from lodestone.tokenize import tokenize
 
-LaneName = Literal["fts_raw", "fts_card", "fts_rare"]
+LaneName = Literal["fts_raw", "fts_card", "fts_rare", "vec_card", "vec_chunk"]
 MAX_CLAUSES = 64
 LANE_COLUMNS: dict[LaneName, str] = {
     "fts_raw": "title text",
