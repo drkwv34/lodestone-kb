@@ -6,13 +6,18 @@ from pathlib import Path
 
 from lodestone.config import DEFAULT_TOML, Config, Prices, Source, load_config
 from lodestone.config_io import registry_text, replace_config
+from lodestone.ingest.embeddings import reindex_vectors
 from lodestone.ingest.pipeline import SyncReport, sync
 from lodestone.lanes.fts import Hit, LaneName, search
+from lodestone.lanes.result import SearchResult
+from lodestone.lanes.vec import search as vec_search
 from lodestone.providers import make_chat
+from lodestone.providers.offline import offline_scope
 from lodestone.storage.costs import summarise
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, open_database
 from lodestone.storage.records import get_record
 from lodestone.storage.registry import reconcile
+from lodestone.vectors.embedder import make_embedder
 
 
 def initialise(directory: Path) -> bool:
@@ -40,24 +45,30 @@ def sync_workspace(
     prune: bool = False,
     provider: str | None = None,
     refresh_cards: bool = False,
+    offline: bool = False,
 ) -> SyncReport:
+    guarded = offline or config.offline
     connection = open_database(config.workspace.db_path)
     try:
-        chat = make_chat(config, provider)
-        try:
-            return sync(
-                connection,
-                config,
-                sources=sources,
-                project=project,
-                prune=prune,
-                chat=chat,
-                refresh_cards=refresh_cards,
-            )
-        finally:
-            closer = getattr(chat, "close", None)
-            if callable(closer):
-                closer()
+        with offline_scope(guarded):
+            chat = make_chat(config, provider, offline=guarded)
+            embedder = make_embedder(config, offline=guarded)
+            try:
+                return sync(
+                    connection,
+                    config,
+                    sources=sources,
+                    project=project,
+                    prune=prune,
+                    chat=chat,
+                    refresh_cards=refresh_cards,
+                    embedder=embedder,
+                )
+            finally:
+                for client in (chat, embedder):
+                    closer = getattr(client, "close", None)
+                    if callable(closer):
+                        closer()
     finally:
         connection.close()
 
@@ -91,14 +102,56 @@ def search_workspace(
     sources: list[str] | None = None,
     kinds: list[str] | None = None,
     limit: int = 10,
+    offline: bool = False,
 ) -> list[Hit]:
+    return search_result(
+        config,
+        query,
+        project=project,
+        lane=lane,
+        sources=sources,
+        kinds=kinds,
+        limit=limit,
+        offline=offline,
+    ).hits
+
+
+def search_result(
+    config: Config,
+    query: str,
+    *,
+    project: str | None = None,
+    lane: LaneName = "fts_raw",
+    sources: list[str] | None = None,
+    kinds: list[str] | None = None,
+    limit: int = 10,
+    offline: bool = False,
+) -> SearchResult:
     sources = config.scoped_sources(project, sources)
     path = config.workspace.db_path
     if inspect_database(path) != SCHEMA_VERSION:
         raise StorageError("Database requires migration; run lodestone init")
     connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     try:
-        return search(
+        if lane == "vec_card" or lane == "vec_chunk":
+            guarded = offline or config.offline
+            with offline_scope(guarded):
+                embedder = make_embedder(config, offline=guarded)
+                try:
+                    return vec_search(
+                        connection,
+                        query,
+                        lane=lane,
+                        embedder=embedder,
+                        sources=sources,
+                        kinds=kinds,
+                        limit=limit,
+                    )
+                finally:
+                    closer = getattr(embedder, "close", None)
+                    if callable(closer):
+                        closer()
+        hits = search(
             connection,
             query,
             lane=lane,
@@ -108,6 +161,49 @@ def search_workspace(
             rare_idf=config.retrieval.rare_idf,
             rare_df_ratio=config.retrieval.rare_df_ratio,
         )
+        return SearchResult(hits, [], lane)
+    finally:
+        connection.close()
+
+
+def reindex_workspace(config: Config, *, lanes: list[str], offline: bool = False) -> dict[str, int]:
+    unknown = [lane for lane in lanes if lane != "vec"]
+    if unknown:
+        raise ValueError("only --lanes vec is supported")
+    guarded = offline or config.offline
+    connection = open_database(config.workspace.db_path)
+    try:
+        with offline_scope(guarded):
+            embedder = make_embedder(config, offline=guarded)
+            try:
+                if embedder is None:
+                    raise ValueError(
+                        "embeddings are disabled; set embed.provider or pass --offline"
+                    )
+                before = int(connection.execute("SELECT count(*) FROM embeddings").fetchone()[0])
+                with connection:
+                    written = reindex_vectors(
+                        connection,
+                        embedder,
+                        config.embed.source,
+                        batch_size=config.embed.batch_size,
+                    )
+                after = int(connection.execute("SELECT count(*) FROM embeddings").fetchone()[0])
+                records = int(
+                    connection.execute(
+                        "SELECT count(*) FROM records WHERE tombstoned=0"
+                    ).fetchone()[0]
+                )
+                return {
+                    "before": before,
+                    "after": after,
+                    "written": written,
+                    "records": records,
+                }
+            finally:
+                closer = getattr(embedder, "close", None)
+                if callable(closer):
+                    closer()
     finally:
         connection.close()
 

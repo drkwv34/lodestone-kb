@@ -15,13 +15,14 @@ import typer
 
 from lodestone.config import Config, ConfigError, Source, load_config, redact
 from lodestone.lanes.fts import LaneName
-from lodestone.providers import ProviderError
+from lodestone.providers import OfflineError, ProviderError
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, probe_fts5
 from lodestone.workspace import (
     cost_workspace,
     get_workspace,
     initialise,
-    search_workspace,
+    reindex_workspace,
+    search_result,
     source_list,
     sync_workspace,
     update_source,
@@ -103,6 +104,7 @@ def sync(
     prune: Annotated[bool, typer.Option()] = False,
     provider: Annotated[str | None, typer.Option(help="fake or config.")] = None,
     refresh_cards: Annotated[bool, typer.Option("--refresh-cards")] = False,
+    offline: Annotated[bool, typer.Option("--offline")] = False,
 ) -> None:
     """Sync files and thread JSONL sources; optionally purge missing items."""
     cfg = configuration(config)
@@ -114,11 +116,12 @@ def sync(
             prune=prune,
             provider=provider,
             refresh_cards=refresh_cards,
+            offline=offline,
         )
     except ValueError as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
         raise typer.Exit(2) from None
-    except ProviderError as exc:
+    except (ProviderError, OfflineError) as exc:
         typer.echo(f"Provider error: {exc}", err=True)
         raise typer.Exit(3) from None
     except (OSError, sqlite3.Error, StorageError) as exc:
@@ -168,32 +171,61 @@ def search(
     query: Annotated[str, typer.Argument(help="Words, quoted phrases or trailing prefix *. ")],
     config: ConfigOption = Path("lodestone.toml"),
     project: Annotated[str | None, typer.Option()] = None,
-    lane: Annotated[LaneName, typer.Option(help="Select one lexical lane.")] = "fts_raw",
+    lane: Annotated[LaneName, typer.Option(help="Select one lexical or vector lane.")] = "fts_raw",
     source: Annotated[list[str] | None, typer.Option(help="Source name; repeatable.")] = None,
     kind: Annotated[list[str] | None, typer.Option(help="Record kind; repeatable.")] = None,
     limit: Annotated[int, typer.Option(min=1)] = 10,
     json_output: Annotated[bool, typer.Option("--json")] = False,
+    offline: Annotated[bool, typer.Option("--offline")] = False,
+    explain: Annotated[bool, typer.Option("--explain")] = False,
 ) -> None:
-    """Search a single lexical lane, with source/kind filters applied in SQL."""
+    """Search a single lexical or vector lane; JSON includes notices for skipped vec lanes."""
     cfg = configuration(config)
     try:
-        hits = search_workspace(
-            cfg, query, project=project, lane=lane, sources=source, kinds=kind, limit=limit
+        result = search_result(
+            cfg,
+            query,
+            project=project,
+            lane=lane,
+            sources=source,
+            kinds=kind,
+            limit=limit,
+            offline=offline,
         )
     except ValueError as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
         raise typer.Exit(2) from None
+    except (ProviderError, OfflineError) as exc:
+        typer.echo(f"Provider error: {exc}", err=True)
+        raise typer.Exit(3) from None
     except (OSError, sqlite3.Error, StorageError) as exc:
         typer.echo(f"Search error: {exc}", err=True)
         raise typer.Exit(1) from None
+    hits = result.hits
     if json_output:
-        typer.echo(json.dumps({"lane": lane, "hits": [asdict(hit) for hit in hits]}))
-    elif not hits:
-        typer.echo("No matches.")
-    else:
-        for rank, hit in enumerate(hits, start=1):
-            typer.echo(f"{rank}. {hit.source}/{hit.ext_id} [{hit.kind}] ({lane}, {hit.score:.6f})")
-            typer.echo(f"   {hit.snippet}")
+        payload: dict[str, object] = {
+            "lane": lane,
+            "hits": [asdict(hit) for hit in hits],
+            "notices": result.notices,
+        }
+        if explain:
+            payload["explain"] = [
+                {"id": hit.id, "lane": hit.lane, "rank": rank, "score": hit.score}
+                for rank, hit in enumerate(hits, start=1)
+            ]
+        typer.echo(json.dumps(payload))
+        return
+    for notice in result.notices:
+        typer.echo(f"notice: {notice}")
+    if not hits:
+        if not result.notices:
+            typer.echo("No matches.")
+        return
+    for rank, hit in enumerate(hits, start=1):
+        typer.echo(f"{rank}. {hit.source}/{hit.ext_id} [{hit.kind}] ({hit.lane}, {hit.score:.6f})")
+        if explain:
+            typer.echo(f"   explain: lane={hit.lane} rank={rank} score={hit.score:.6f}")
+        typer.echo(f"   {hit.snippet}")
 
 
 @source_app.command("add")
@@ -280,6 +312,7 @@ def source_sync(
     prune: Annotated[bool, typer.Option()] = False,
     provider: Annotated[str | None, typer.Option()] = None,
     refresh_cards: Annotated[bool, typer.Option("--refresh-cards")] = False,
+    offline: Annotated[bool, typer.Option("--offline")] = False,
 ) -> None:
     """Sync one source, or all sources in the selected project."""
     sync(
@@ -289,4 +322,27 @@ def source_sync(
         prune=prune,
         provider=provider,
         refresh_cards=refresh_cards,
+        offline=offline,
     )
+
+
+@app.command()
+def reindex(
+    config: ConfigOption = Path("lodestone.toml"),
+    lanes: Annotated[list[str] | None, typer.Option("--lanes")] = None,
+    offline: Annotated[bool, typer.Option("--offline")] = False,
+) -> None:
+    """Rebuild derived data from stored text without contacting sources."""
+    cfg = configuration(config)
+    try:
+        report = reindex_workspace(cfg, lanes=lanes or ["vec"], offline=offline)
+    except ValueError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
+    except (ProviderError, OfflineError) as exc:
+        typer.echo(f"Provider error: {exc}", err=True)
+        raise typer.Exit(3) from None
+    except (OSError, sqlite3.Error, StorageError) as extra:
+        typer.echo(f"Reindex error: {extra}", err=True)
+        raise typer.Exit(1) from None
+    typer.echo(json.dumps(report))
