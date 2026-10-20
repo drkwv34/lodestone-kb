@@ -184,6 +184,7 @@ class Project(Model):
 
 class Config(Model):
     schema_version: Literal[1] = 1
+    offline: bool = False
     workspace: Workspace = Field(default_factory=Workspace)
     llm: LLM | None = None
     embed: Embed = Field(default_factory=Embed)
