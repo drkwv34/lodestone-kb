@@ -122,6 +122,7 @@ Recorded after the feature commits on `feat/vector-lanes`:
 
 ```text
 $ git log 417dc27..HEAD --format='%h %an <%ae> | %cn <%ce>'
+7523f44 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 12ececc Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 1dbd779 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 634204e Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -167,4 +168,29 @@ $ lodestone search "ERR_MANIFEST_TIMEOUT" --lane vec_card --json
 
 ## CI
 
-Pending green checks on the PR head. This section will be pasted from the GitHub Actions run once it completes.
+PR head `7523f449b8d4d9875faf2129b884e1edaca49900`. All nine jobs `completed` / `success`.
+
+```text
+https://github.com/drkwv34/lodestone-kb/actions/runs/39460906109
+conclusion: success
+```
+
+```json
+{
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39460906109",
+  "head_sha": "7523f449b8d4d9875faf2129b884e1edaca49900",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "openspec", "status": "completed", "conclusion": "success"},
+    {"name": "licenses", "status": "completed", "conclusion": "success"},
+    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "build", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
+    {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
+    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
+  ]
+}
+```
