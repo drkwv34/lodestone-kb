@@ -9,10 +9,12 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Literal
 
+from lodestone.lanes.scope import Scope
+from lodestone.lanes.scope import clauses as filter_clauses
 from lodestone.storage.terms import rare_terms
 from lodestone.tokenize import tokenize
 
-LaneName = Literal["fts_raw", "fts_card", "fts_rare", "vec_card", "vec_chunk"]
+LaneName = Literal["fts_raw", "fts_card", "fts_rare", "vec_card", "vec_chunk", "grep"]
 MAX_CLAUSES = 64
 LANE_COLUMNS: dict[LaneName, str] = {
     "fts_raw": "title text",
@@ -22,21 +24,24 @@ LANE_COLUMNS: dict[LaneName, str] = {
 LANE_SQL: dict[LaneName, tuple[str, str]] = {
     "fts_raw": (
         "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
-        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0),r.updated_at "
+        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0),r.updated_at,"
+        "r.parent_id "
         "FROM records_fts JOIN records r ON r.id=records_fts.rowid "
         "JOIN sources s ON s.id=r.source_id WHERE ",
         " ORDER BY bm25(records_fts,3.0,1.0),r.updated_at DESC,r.id LIMIT ?",
     ),
     "fts_card": (
         "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
-        "snippet(records_card_fts,0,'[',']',' … ',32),bm25(records_card_fts),r.updated_at "
+        "snippet(records_card_fts,0,'[',']',' … ',32),bm25(records_card_fts),r.updated_at,"
+        "r.parent_id "
         "FROM records_card_fts JOIN records r ON r.id=records_card_fts.rowid "
         "JOIN sources s ON s.id=r.source_id WHERE ",
         " ORDER BY bm25(records_card_fts),r.updated_at DESC,r.id LIMIT ?",
     ),
     "fts_rare": (
         "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,"
-        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0),r.updated_at "
+        "snippet(records_fts,1,'[',']',' … ',32),bm25(records_fts,3.0,1.0),r.updated_at,"
+        "r.parent_id "
         "FROM records_fts JOIN records r ON r.id=records_fts.rowid "
         "JOIN sources s ON s.id=r.source_id WHERE ",
         " ORDER BY bm25(records_fts,3.0,1.0),r.updated_at DESC,r.id LIMIT ?",
@@ -82,6 +87,7 @@ class Hit:
     score: float
     lane: LaneName
     updated_at: str
+    parent_id: int | None = None
 
 
 def search(
@@ -91,6 +97,11 @@ def search(
     lane: LaneName = "fts_raw",
     sources: list[str] | None = None,
     kinds: list[str] | None = None,
+    authors: list[str] | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    metadata: dict[str, str] | None = None,
+    scope: Scope | None = None,
     limit: int = 10,
     rare_idf: float = 4.0,
     rare_df_ratio: float | None = None,
@@ -108,16 +119,13 @@ def search(
         expression = sanitise(query, columns)
     if not expression:
         return []
+    filters = scope or Scope(
+        sources=sources, kinds=kinds, authors=authors, since=since, until=until, metadata=metadata
+    )
+    extra, extra_params = filter_clauses(filters)
     match = "records_card_fts MATCH ?" if lane == "fts_card" else "records_fts MATCH ?"
-    where = [match, "r.tombstoned=0"]
-    parameters: list[str | int] = [expression]
-    for column, values in (("s.name", sources), ("r.kind", kinds)):
-        if values is not None:
-            if not values:
-                return []
-            where.append(column + " IN (" + ",".join("?" for _ in values) + ")")
-            parameters.extend(values)
-    parameters.append(limit)
+    where = [match, *extra]
+    parameters: list[object] = [expression, *extra_params, limit]
     sql = prefix + " AND ".join(where) + suffix
     return [
         Hit(
@@ -131,6 +139,7 @@ def search(
             score=-float(row[7]),
             lane=lane,
             updated_at=row[8],
+            parent_id=None if row[9] is None else int(row[9]),
         )
         for row in connection.execute(sql, parameters)
     ]
