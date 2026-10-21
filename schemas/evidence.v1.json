@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lodestone.local/schemas/evidence.v1.json",
+  "title": "evidence.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "source",
+    "kind",
+    "title",
+    "uri",
+    "snippet",
+    "score",
+    "lanes",
+    "updated_at",
+    "authors",
+    "children",
+    "neighbours"
+  ],
+  "properties": {
+    "schema": { "const": "evidence.v1" },
+    "id": { "type": "integer" },
+    "source": { "type": "string" },
+    "kind": { "type": "string" },
+    "title": { "type": "string" },
+    "uri": { "type": "string" },
+    "snippet": { "type": "string" },
+    "text": { "type": ["string", "null"] },
+    "score": { "type": "number" },
+    "lanes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["rank"],
+        "properties": {
+          "rank": { "type": "integer" },
+          "raw_score": { "type": "number" },
+          "contribution": { "type": "number" },
+          "score": { "type": "number" }
+        }
+      }
+    },
+    "updated_at": { "type": "string" },
+    "authors": { "type": "array", "items": { "type": "string" } },
+    "card": { "type": ["object", "null"] },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "integer" },
+          "kind": { "type": "string" },
+          "snippet": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      }
+    },
+    "neighbours": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "integer" },
+          "seq": { "type": "integer" },
+          "title": { "type": "string" },
+          "snippet": { "type": "string" }
+        }
+      }
+    },
+    "explain": { "type": ["object", "null"] }
+  }
+}

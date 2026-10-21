@@ -26,9 +26,10 @@ def main() -> None:
             capture_output=True,
             check=True,
         )
-        if '"ext_id": "manifest.md"' not in result.stdout:
-            raise RuntimeError("Installed wheel lexical search failed")
-        print("Wheel smoke: init, doctor, config, sync, search passed")
+        fused = '"schema": "evidence.v1"' in result.stdout
+        if not fused or "ERR_MANIFEST_TIMEOUT" not in result.stdout:
+            raise RuntimeError(f"Installed wheel fused search failed: {result.stdout}")
+        print("Wheel smoke: init, doctor, config, sync, fused search passed")
 
 
 if __name__ == "__main__":

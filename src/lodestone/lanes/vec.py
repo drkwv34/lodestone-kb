@@ -9,6 +9,7 @@ from typing import Literal
 
 from lodestone.lanes.fts import Hit
 from lodestone.lanes.result import SearchResult
+from lodestone.lanes.scope import Scope, clauses
 from lodestone.storage.embeddings import matching_count
 from lodestone.vectors.backends import BruteForceBackend, SqliteVecBackend, sqlite_vec_available
 from lodestone.vectors.embedder import Embedder
@@ -28,6 +29,11 @@ def search(
     embedder: Embedder | None,
     sources: list[str] | None = None,
     kinds: list[str] | None = None,
+    authors: list[str] | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    metadata: dict[str, str] | None = None,
+    scope: Scope | None = None,
     limit: int = 10,
 ) -> SearchResult:
     if limit < 1:
@@ -43,13 +49,15 @@ def search(
         else:
             notice = f"{lane} skipped: embeddings unavailable"
         return SearchResult([], [notice], lane)
+    filters = scope or Scope(
+        sources=sources, kinds=kinds, authors=authors, since=since, until=until, metadata=metadata
+    )
     rows = _load_rows(
         connection,
         embedder.model,
         embedder.dim,
         embed_kinds,
-        sources=sources,
-        kinds=kinds,
+        scope=filters,
     )
     if not rows:
         return SearchResult([], [], lane)
@@ -70,27 +78,17 @@ def _load_rows(
     dim: int,
     embed_kinds: tuple[str, ...],
     *,
-    sources: list[str] | None,
-    kinds: list[str] | None,
+    scope: Scope,
 ) -> list[tuple[int, bytes]]:
     placeholders = ",".join("?" for _ in embed_kinds)
+    extra, extra_params = clauses(scope)
     where = [
-        "r.tombstoned=0",
         "e.model=?",
         "e.dim=?",
         f"e.kind IN ({placeholders})",
+        *extra,
     ]
-    parameters: list[object] = [model, dim, *embed_kinds]
-    if sources is not None:
-        if not sources:
-            return []
-        where.append("s.name IN (" + ",".join("?" for _ in sources) + ")")
-        parameters.extend(sources)
-    if kinds is not None:
-        if not kinds:
-            return []
-        where.append("r.kind IN (" + ",".join("?" for _ in kinds) + ")")
-        parameters.extend(kinds)
+    parameters: list[object] = [model, dim, *embed_kinds, *extra_params]
     prefix = (
         "SELECT e.record_id, e.vec FROM embeddings e "
         "JOIN records r ON r.id=e.record_id JOIN sources s ON s.id=r.source_id WHERE "
@@ -103,8 +101,8 @@ def _load_rows(
 
 def _hit(connection: sqlite3.Connection, record_id: int, score: float, lane: VecLane) -> Hit | None:
     row = connection.execute(
-        "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,r.text,r.updated_at "
-        "FROM records r JOIN sources s ON s.id=r.source_id WHERE r.id=?",
+        "SELECT r.id,r.ext_id,s.name,r.kind,r.title,r.metadata_json,r.text,r.updated_at,"
+        "r.parent_id FROM records r JOIN sources s ON s.id=r.source_id WHERE r.id=?",
         (record_id,),
     ).fetchone()
     if row is None:
@@ -121,4 +119,5 @@ def _hit(connection: sqlite3.Connection, record_id: int, score: float, lane: Vec
         score=float(score),
         lane=lane,
         updated_at=row[7],
+        parent_id=None if row[8] is None else int(row[8]),
     )

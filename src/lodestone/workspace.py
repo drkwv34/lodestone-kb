@@ -6,10 +6,13 @@ from pathlib import Path
 
 from lodestone.config import DEFAULT_TOML, Config, Prices, Source, load_config
 from lodestone.config_io import registry_text, replace_config
+from lodestone.fusion.pipeline import fused_search
 from lodestone.ingest.embeddings import reindex_vectors
 from lodestone.ingest.pipeline import SyncReport, sync
 from lodestone.lanes.fts import Hit, LaneName, search
+from lodestone.lanes.grep import search as grep_search
 from lodestone.lanes.result import SearchResult
+from lodestone.lanes.scope import Scope
 from lodestone.lanes.vec import search as vec_search
 from lodestone.providers import make_chat
 from lodestone.providers.offline import offline_scope
@@ -98,11 +101,18 @@ def search_workspace(
     query: str,
     *,
     project: str | None = None,
-    lane: LaneName = "fts_raw",
+    lane: LaneName | None = None,
     sources: list[str] | None = None,
     kinds: list[str] | None = None,
+    authors: list[str] | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    metadata: dict[str, str] | None = None,
     limit: int = 10,
     offline: bool = False,
+    decay: bool = True,
+    explain: bool = False,
+    regex: bool = False,
 ) -> list[Hit]:
     return search_result(
         config,
@@ -111,8 +121,15 @@ def search_workspace(
         lane=lane,
         sources=sources,
         kinds=kinds,
+        authors=authors,
+        since=since,
+        until=until,
+        metadata=metadata,
         limit=limit,
         offline=offline,
+        decay=decay,
+        explain=explain,
+        regex=regex,
     ).hits
 
 
@@ -121,18 +138,51 @@ def search_result(
     query: str,
     *,
     project: str | None = None,
-    lane: LaneName = "fts_raw",
+    lane: LaneName | None = None,
     sources: list[str] | None = None,
     kinds: list[str] | None = None,
+    authors: list[str] | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    metadata: dict[str, str] | None = None,
     limit: int = 10,
     offline: bool = False,
+    decay: bool = True,
+    explain: bool = False,
+    regex: bool = False,
 ) -> SearchResult:
     sources = config.scoped_sources(project, sources)
     path = config.workspace.db_path
     if inspect_database(path) != SCHEMA_VERSION:
         raise StorageError("Database requires migration; run lodestone init")
+    scope = Scope(
+        sources=sources, kinds=kinds, authors=authors, since=since, until=until, metadata=metadata
+    )
     connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     try:
+        if lane is None:
+            guarded = offline or config.offline
+            with offline_scope(guarded):
+                embedder = make_embedder(config, offline=guarded)
+                try:
+                    return fused_search(
+                        connection,
+                        config,
+                        query,
+                        scope=scope,
+                        limit=limit,
+                        decay=decay,
+                        explain=explain,
+                        regex=regex,
+                        include_grep=regex,
+                        embedder=embedder,
+                    )
+                finally:
+                    closer = getattr(embedder, "close", None)
+                    if callable(closer):
+                        closer()
+        if lane == "grep":
+            return grep_search(connection, query, regex=regex, scope=scope, limit=limit)
         if lane == "vec_card" or lane == "vec_chunk":
             guarded = offline or config.offline
             with offline_scope(guarded):
@@ -143,8 +193,7 @@ def search_result(
                         query,
                         lane=lane,
                         embedder=embedder,
-                        sources=sources,
-                        kinds=kinds,
+                        scope=scope,
                         limit=limit,
                     )
                 finally:
@@ -155,8 +204,7 @@ def search_result(
             connection,
             query,
             lane=lane,
-            sources=sources,
-            kinds=kinds,
+            scope=scope,
             limit=limit,
             rare_idf=config.retrieval.rare_idf,
             rare_df_ratio=config.retrieval.rare_df_ratio,
