@@ -15,6 +15,7 @@ import typer
 
 from lodestone.config import Config, ConfigError, Source, load_config, redact
 from lodestone.lanes.fts import LaneName
+from lodestone.lanes.scope import parse_metadata
 from lodestone.providers import OfflineError, ProviderError
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, probe_fts5
 from lodestone.workspace import (
@@ -168,18 +169,26 @@ def get_record_cmd(
 
 @app.command()
 def search(
-    query: Annotated[str, typer.Argument(help="Words, quoted phrases or trailing prefix *. ")],
+    query: Annotated[str, typer.Argument(help="Words, quoted phrases, trailing prefix * or grep.")],
     config: ConfigOption = Path("lodestone.toml"),
     project: Annotated[str | None, typer.Option()] = None,
-    lane: Annotated[LaneName, typer.Option(help="Select one lexical or vector lane.")] = "fts_raw",
+    lane: Annotated[
+        LaneName | None, typer.Option(help="One lane; omit to fuse available lanes.")
+    ] = None,
     source: Annotated[list[str] | None, typer.Option(help="Source name; repeatable.")] = None,
     kind: Annotated[list[str] | None, typer.Option(help="Record kind; repeatable.")] = None,
+    author: Annotated[list[str] | None, typer.Option(help="Author; repeatable.")] = None,
+    since: Annotated[str | None, typer.Option(help="Inclusive updated_at lower bound.")] = None,
+    until: Annotated[str | None, typer.Option(help="Inclusive updated_at upper bound.")] = None,
+    meta: Annotated[list[str] | None, typer.Option(help="Metadata key=value; repeatable.")] = None,
     limit: Annotated[int, typer.Option(min=1)] = 10,
     json_output: Annotated[bool, typer.Option("--json")] = False,
     offline: Annotated[bool, typer.Option("--offline")] = False,
     explain: Annotated[bool, typer.Option("--explain")] = False,
+    no_decay: Annotated[bool, typer.Option("--no-decay")] = False,
+    regex: Annotated[bool, typer.Option("--regex")] = False,
 ) -> None:
-    """Search a single lexical or vector lane; JSON includes notices for skipped vec lanes."""
+    """Fuse available lanes, or search one lane when --lane is set."""
     cfg = configuration(config)
     try:
         result = search_result(
@@ -189,8 +198,15 @@ def search(
             lane=lane,
             sources=source,
             kinds=kind,
+            authors=author,
+            since=since,
+            until=until,
+            metadata=parse_metadata(meta),
             limit=limit,
             offline=offline,
+            decay=not no_decay,
+            explain=explain,
+            regex=regex,
         )
     except ValueError as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
@@ -204,11 +220,11 @@ def search(
     hits = result.hits
     if json_output:
         payload: dict[str, object] = {
-            "lane": lane,
-            "hits": [asdict(hit) for hit in hits],
+            "lane": result.lane or lane or "fused",
+            "hits": result.packets or [asdict(hit) for hit in hits],
             "notices": result.notices,
         }
-        if explain:
+        if explain and not result.packets:
             payload["explain"] = [
                 {"id": hit.id, "lane": hit.lane, "rank": rank, "score": hit.score}
                 for rank, hit in enumerate(hits, start=1)
@@ -224,7 +240,20 @@ def search(
     for rank, hit in enumerate(hits, start=1):
         typer.echo(f"{rank}. {hit.source}/{hit.ext_id} [{hit.kind}] ({hit.lane}, {hit.score:.6f})")
         if explain:
-            typer.echo(f"   explain: lane={hit.lane} rank={rank} score={hit.score:.6f}")
+            packet = result.packets[rank - 1] if rank - 1 < len(result.packets) else None
+            detail = packet.get("explain") if isinstance(packet, dict) else None
+            if isinstance(detail, dict):
+                parts = [
+                    f"{name} r={info.get('rank')} c={info.get('contribution', 0):.4f}"
+                    for name, info in detail.items()
+                    if isinstance(info, dict)
+                ]
+                typer.echo(
+                    f"   explain: {' '.join(parts)} decay={detail.get('decay_factor')} "
+                    f"final={detail.get('final')}"
+                )
+            else:
+                typer.echo(f"   explain: lane={hit.lane} rank={rank} score={hit.score:.6f}")
         typer.echo(f"   {hit.snippet}")
 
 
