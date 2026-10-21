@@ -37,11 +37,22 @@ def test_fr_010_fr_030_fr_041_sync_search_smoke(tmp_path: Path) -> None:
     assert json.loads(first.stdout)["processed"] == 4
     second = command(tmp_path, "sync")
     assert json.loads(second.stdout)["processed"] == 0
-    human = command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--kind", "doc")
+    human = command(
+        tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--kind", "doc", "--lane", "fts_raw"
+    )
     assert human.returncode == 0, human.stderr
     assert "1. wiki/manifest.md [doc] (fts_raw," in human.stdout
     result = command(
-        tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--source", "wiki", "--kind", "doc", "--json"
+        tmp_path,
+        "search",
+        "ERR_MANIFEST_TIMEOUT",
+        "--source",
+        "wiki",
+        "--kind",
+        "doc",
+        "--lane",
+        "fts_raw",
+        "--json",
     )
     assert result.returncode == 0, result.stderr
     output = json.loads(result.stdout)
