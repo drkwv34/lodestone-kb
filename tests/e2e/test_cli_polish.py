@@ -3,6 +3,7 @@ import json
 import shutil
 from pathlib import Path
 
+import click
 from typer.testing import CliRunner
 
 from lodestone.cli import app
@@ -10,16 +11,16 @@ from tests.e2e.test_lexical_cli import command
 
 CORPUS = Path(__file__).parents[1] / "fixtures/corpus"
 HELP = Path(__file__).parents[1] / "fixtures/help"
-runner = CliRunner()
+runner = CliRunner(env={"NO_COLOR": "1", "FORCE_COLOR": "0", "TERM": "dumb"})
 COMMANDS = ("search", "grep", "get", "who-knows", "recent", "stats")
 
 
 def test_fr_051_cli_help_snapshots() -> None:
     for name in COMMANDS:
-        result = runner.invoke(app, [name, "--help"])
+        result = runner.invoke(app, [name, "--help"], color=False)
         assert result.exit_code == 0, result.output
         expected = (HELP / f"{name}.txt").read_text(encoding="utf-8")
-        assert result.output == expected
+        assert click.unstyle(result.output) == expected
 
 
 def test_fr_051_search_grep_get_who_knows_recent_stats(tmp_path: Path) -> None:
