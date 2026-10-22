@@ -1,0 +1,20 @@
+                                                                                
+ Usage: root grep [OPTIONS] {pattern}                                           
+                                                                                
+ Search raw record text with a literal or regex pattern.                        
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    pattern      <str>  [required]                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config     -c      <path>              Path to lodestone.toml.             │
+│                                          [default: lodestone.toml]           │
+│ --project            <str>                                                   │
+│ --regex                                                                      │
+│ --path-glob          <str>                                                   │
+│ --context            <int range> [x>=0]  [default: 2]                        │
+│ --limit              <int range> [x>=1]  [default: 20]                       │
+│ --json                                                                       │
+│ --help                                   Show this message and exit.         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

@@ -1,0 +1,15 @@
+                                                                                
+ Usage: root get [OPTIONS] {ref}                                                
+                                                                                
+ Return raw text beside the stored card so claims stay checkable.               
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    ref      <str>  Record id or ext_id. [required]                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config  -c      <path>  Path to lodestone.toml. [default: lodestone.toml]  │
+│ --source          <str>                                                      │
+│ --json                                                                       │
+│ --help                    Show this message and exit.                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

@@ -1,0 +1,10 @@
+                                                                                
+ Usage: root stats [OPTIONS]                                                    
+                                                                                
+ Show record, source and query-log counts.                                      
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config  -c      <path>  Path to lodestone.toml. [default: lodestone.toml]  │
+│ --help                    Show this message and exit.                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

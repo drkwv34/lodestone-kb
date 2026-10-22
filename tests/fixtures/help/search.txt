@@ -1,0 +1,35 @@
+                                                                                
+ Usage: root search [OPTIONS] {query}                                           
+                                                                                
+ Fuse available lanes, or search one lane when --lane is set.                   
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    query      <str>  Words, quoted phrases, trailing prefix * or grep.     │
+│                        [required]                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config    -c      <path>                       Path to lodestone.toml.     │
+│                                                  [default: lodestone.toml]   │
+│ --project           <str>                                                    │
+│ --lane              <fts_raw|fts_card|fts_rare|  One lane; omit to fuse      │
+│                     vec_card|vec_chunk|grep>     available lanes.            │
+│ --source            <str>                        Source name; repeatable.    │
+│ --kind              <str>                        Record kind; repeatable.    │
+│ --author            <str>                        Author; repeatable.         │
+│ --since             <str>                        Inclusive updated_at lower  │
+│                                                  bound.                      │
+│ --until             <str>                        Inclusive updated_at upper  │
+│                                                  bound.                      │
+│ --meta              <str>                        Metadata key=value;         │
+│                                                  repeatable.                 │
+│ --limit             <int range> [x>=1]           [default: 10]               │
+│ --json                                                                       │
+│ --offline                                                                    │
+│ --explain                                                                    │
+│ --no-decay                                                                   │
+│ --regex                                                                      │
+│ --rerank                                                                     │
+│ --provider          <str>                        fake or config.             │
+│ --help                                           Show this message and exit. │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
