@@ -73,6 +73,7 @@ def search(
     )
     deadline = time.monotonic() + timeout_s
     hits: list[Hit] = []
+    found: list[dict[str, object]] = []
     notices: list[str] = []
     for row in connection.execute(sql, parameters):
         if time.monotonic() > deadline:
@@ -84,6 +85,8 @@ def search(
         if not matches:
             continue
         first = matches[0]
+        uri = str(json.loads(row[5] or "{}").get("uri", ""))
+        snippet = _snippet(lines, first, context)
         hits.append(
             Hit(
                 id=int(row[0]),
@@ -91,14 +94,29 @@ def search(
                 source=str(row[2]),
                 kind=str(row[3]),
                 title=str(row[4] or ""),
-                uri=str(json.loads(row[5] or "{}").get("uri", "")),
-                snippet=_snippet(lines, first, context),
+                uri=uri,
+                snippet=snippet,
                 score=float(len(matches)),
                 lane="grep",
                 updated_at=str(row[7] or ""),
             )
         )
+        found.append(
+            {
+                "record_id": int(row[0]),
+                "uri": uri,
+                "line": first + 1,
+                "text": lines[first],
+                "context": snippet,
+            }
+        )
         if len(hits) >= limit:
             break
     hits.sort(key=lambda hit: (-hit.score, hit.updated_at, -hit.id))
-    return SearchResult(hits[:limit], notices, "grep")
+    by_id: dict[int, dict[str, object]] = {}
+    for item in found:
+        ident = item["record_id"]
+        if isinstance(ident, int) and not isinstance(ident, bool):
+            by_id[ident] = item
+    ordered = [by_id[hit.id] for hit in hits[:limit] if hit.id in by_id]
+    return SearchResult(hits[:limit], notices, "grep", matches=ordered)

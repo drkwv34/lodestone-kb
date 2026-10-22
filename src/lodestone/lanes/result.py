@@ -14,3 +14,4 @@ class SearchResult:
     notices: list[str] = field(default_factory=list)
     lane: str = ""
     packets: list[dict[str, object]] = field(default_factory=list)
+    matches: list[dict[str, object]] = field(default_factory=list)

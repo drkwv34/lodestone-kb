@@ -29,6 +29,8 @@ from lodestone.lanes.result import SearchResult
 from lodestone.lanes.scope import Scope
 from lodestone.lanes.vec import VecLane
 from lodestone.lanes.vec import search as vec_search
+from lodestone.providers import Chat
+from lodestone.rerank import apply as apply_rerank
 from lodestone.vectors.embedder import Embedder
 
 FTS_LANES: tuple[LaneName, ...] = ("fts_raw", "fts_card", "fts_rare")
@@ -144,6 +146,8 @@ def fused_search(
     include_grep: bool = False,
     embedder: Embedder | None = None,
     now: datetime | None = None,
+    rerank: bool | None = None,
+    chat: Chat | None = None,
 ) -> SearchResult:
     retrieval = config.retrieval
     enabled = list(retrieval.lanes)
@@ -201,9 +205,26 @@ def fused_search(
     selected = collapse(
         ranked, max_per_source=retrieval.max_per_source, pool=retrieval.candidate_pool
     )
+    rerank_scores: dict[int, float] = {}
+    want_rerank = retrieval.rerank if rerank is None else rerank
+    keep = limit
+    if want_rerank:
+        pool: list[tuple[int, str, float]] = []
+        by_id = {item.id: item for item in selected}
+        for item in selected:
+            row = _row(connection, item.id)
+            text = "" if row is None else str(row.get("text") or row.get("snippet") or "")
+            pool.append((item.id, text, item.score))
+        outcome = apply_rerank(query, pool, chat, keep=retrieval.rerank_keep)
+        selected = [by_id[ident] for ident in outcome.order if ident in by_id]
+        rerank_scores = outcome.scores
+        if outcome.notice:
+            notices.append(outcome.notice)
+        elif outcome.scores:
+            keep = min(limit, retrieval.rerank_keep)
     packets: list[dict[str, object]] = []
     hits: list[Hit] = []
-    for item in selected[:limit]:
+    for item in selected[:keep]:
         member = max(item.member_ids, key=lambda ident: decayed.get(ident, (0.0, 1.0))[0])
         fused_score = fused[member]
         final, factor = decayed[member]
@@ -242,7 +263,7 @@ def fused_search(
                 lanes=lanes,
                 rrf=fused_score.rrf,
                 decay_factor=factor,
-                rerank_score=None,
+                rerank_score=rerank_scores.get(item.id),
                 final=final,
             )
             if explain

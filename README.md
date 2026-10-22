@@ -10,7 +10,8 @@
 Local Markdown/text, code and JSONL thread ingestion, structural chunking,
 distilled cards, lexical search and optional embeddings are available through
 `init`, `doctor`, `config show`, `source add/list/remove/sync`, `sync`,
-`search` and `reindex`. No automatic PyPI publishing is configured.
+`search`, `grep`, `get`, `who-knows`, `recent`, `stats` and `reindex`.
+The Python SDK is `Lodestone.open`. No automatic PyPI publishing is configured.
 
 ## Why
 
@@ -48,10 +49,29 @@ lodestone source add wiki --kind files --path tests/fixtures/corpus --exclude 'd
 lodestone source list
 lodestone sync --offline
 lodestone search "ERR_MANIFEST_TIMEOUT"
+lodestone grep "ERR_MANIFEST_TIMEOUT"
+lodestone who-knows "manifest"
+lodestone recent --limit 5
+lodestone stats
 lodestone search "ERR_MANIFEST_TIMEOUT" --lane vec_card --offline --explain --json
 lodestone reindex --lanes vec --offline
 lodestone search '"manifest load"' --source wiki --kind section --json
 lodestone source sync wiki --prune
+```
+
+Typed SDK (this snippet is a doctest; no network):
+
+```python
+>>> from pathlib import Path
+>>> from tempfile import TemporaryDirectory
+>>> from lodestone import Lodestone
+>>> with TemporaryDirectory() as tmp:
+...     kb = Lodestone.open(Path(tmp), offline=True)
+...     _ = kb.sync()
+...     result = kb.search("nothing-at-all")
+...     isinstance(result.hits, list)
+True
+
 ```
 
 Markdown/text files retain a `doc` parent plus ordered `section` children; code
@@ -105,9 +125,10 @@ exact brute-force cosine (stdlib array, numpy if present).
 | Capability | Available | Planned |
 |---|---|---|
 | Typed TOML, schema migrations, local diagnostics | Available | Expanded diagnostics |
-| Lexical indexing and search | Available: raw/rare lanes | Hybrid fusion |
-| Optional embeddings and vec lanes | Available: hash/openai_compat, brute-force and sqlite-vec, vec_card/vec_chunk, `--offline`, `reindex --lanes vec` | Fusion weights |
-| Thread cards, burst records, recency | Available: JSONL threads, cards, bursts | Recency decay |
+| Lexical indexing and search | Available: raw/rare lanes, fused hybrid search, optional LLM rerank | — |
+| Optional embeddings and vec lanes | Available: hash/openai_compat, brute-force and sqlite-vec, vec_card/vec_chunk, `--offline`, `reindex --lanes vec` | — |
+| Thread cards, burst records, recency | Available: JSONL threads, cards, bursts, recency decay | — |
+| Typed SDK and CLI | Available: `Lodestone` facade, grep/who-knows/recent/stats | MCP, ask, bench |
 | Read-only MCP for coding agents | Planned | MCP server |
 | Corpus-specific strategy benchmark | Planned | Strategy evaluation |
 | Tree reasoning over long documents (PageIndex style) | Out of scope | Not in MVP |

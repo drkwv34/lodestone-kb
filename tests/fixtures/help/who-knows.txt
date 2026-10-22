@@ -1,0 +1,17 @@
+                                                                                
+ Usage: root who-knows [OPTIONS] {topic}                                        
+                                                                                
+ Rank authors of records matching a topic.                                      
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    topic      <str>  [required]                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config   -c      <path>              Path to lodestone.toml.               │
+│                                        [default: lodestone.toml]             │
+│ --project          <str>                                                     │
+│ --limit            <int range> [x>=1]  [default: 5]                          │
+│ --json                                                                       │
+│ --help                                 Show this message and exit.           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

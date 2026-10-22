@@ -1,0 +1,15 @@
+                                                                                
+ Usage: root recent [OPTIONS]                                                   
+                                                                                
+ List the most recently updated records.                                        
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config     -c      <path>              Path to lodestone.toml.             │
+│                                          [default: lodestone.toml]           │
+│ --project            <str>                                                   │
+│ --since              <str>                                                   │
+│ --limit,--n          <int range> [x>=1]  [default: 10]                       │
+│ --json                                                                       │
+│ --help                                   Show this message and exit.         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

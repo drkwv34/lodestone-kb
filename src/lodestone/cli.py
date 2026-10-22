@@ -21,12 +21,16 @@ from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database,
 from lodestone.workspace import (
     cost_workspace,
     get_workspace,
+    grep_workspace,
     initialise,
+    recent_workspace,
     reindex_workspace,
     search_result,
     source_list,
+    stats_workspace,
     sync_workspace,
     update_source,
+    who_knows_workspace,
 )
 
 app = typer.Typer(no_args_is_help=True, help="Lodestone local knowledge workspace.")
@@ -43,6 +47,29 @@ def configuration(path: Path) -> Config:
     except ConfigError as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
         raise typer.Exit(2) from None
+
+
+def fail(action: str, exc: BaseException) -> None:
+    if isinstance(exc, (ConfigError, ValueError)):
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(2) from None
+    if isinstance(exc, (ProviderError, OfflineError)):
+        typer.echo(f"Provider error: {exc}", err=True)
+        raise typer.Exit(3) from None
+    typer.echo(f"{action} error: {exc}", err=True)
+    raise typer.Exit(1) from None
+
+
+Caught = (
+    ConfigError,
+    ValueError,
+    ProviderError,
+    OfflineError,
+    OSError,
+    sqlite3.Error,
+    StorageError,
+    KeyError,
+)
 
 
 @app.command()
@@ -187,6 +214,8 @@ def search(
     explain: Annotated[bool, typer.Option("--explain")] = False,
     no_decay: Annotated[bool, typer.Option("--no-decay")] = False,
     regex: Annotated[bool, typer.Option("--regex")] = False,
+    rerank: Annotated[bool, typer.Option("--rerank")] = False,
+    provider: Annotated[str | None, typer.Option(help="fake or config.")] = None,
 ) -> None:
     """Fuse available lanes, or search one lane when --lane is set."""
     cfg = configuration(config)
@@ -207,16 +236,11 @@ def search(
             decay=not no_decay,
             explain=explain,
             regex=regex,
+            rerank=rerank or None,
+            provider=provider,
         )
-    except ValueError as exc:
-        typer.echo(f"Configuration error: {exc}", err=True)
-        raise typer.Exit(2) from None
-    except (ProviderError, OfflineError) as exc:
-        typer.echo(f"Provider error: {exc}", err=True)
-        raise typer.Exit(3) from None
-    except (OSError, sqlite3.Error, StorageError) as exc:
-        typer.echo(f"Search error: {exc}", err=True)
-        raise typer.Exit(1) from None
+    except Caught as exc:
+        fail("Search", exc)
     hits = result.hits
     if json_output:
         payload: dict[str, object] = {
@@ -255,6 +279,104 @@ def search(
             else:
                 typer.echo(f"   explain: lane={hit.lane} rank={rank} score={hit.score:.6f}")
         typer.echo(f"   {hit.snippet}")
+
+
+@app.command()
+def grep(
+    pattern: Annotated[str, typer.Argument()],
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+    regex: Annotated[bool, typer.Option("--regex")] = False,
+    path_glob: Annotated[str | None, typer.Option("--path-glob")] = None,
+    context: Annotated[int, typer.Option(min=0)] = 2,
+    limit: Annotated[int, typer.Option(min=1)] = 20,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Search raw record text with a literal or regex pattern."""
+    cfg = configuration(config)
+    try:
+        result = grep_workspace(
+            cfg,
+            pattern,
+            regex=regex,
+            project=project,
+            path_glob=path_glob,
+            context=context,
+            limit=limit,
+        )
+    except Caught as exc:
+        fail("Grep", exc)
+    if json_output:
+        typer.echo(json.dumps({"matches": result.matches, "notices": result.notices}))
+        return
+    for notice in result.notices:
+        typer.echo(f"notice: {notice}")
+    if not result.matches:
+        typer.echo("No matches.")
+        return
+    for match in result.matches:
+        typer.echo(f"{match['record_id']} {match['uri']}:{match['line']}: {match['text']}")
+
+
+@app.command("who-knows")
+def who_knows_cmd(
+    topic: Annotated[str, typer.Argument()],
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+    limit: Annotated[int, typer.Option(min=1)] = 5,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Rank authors of records matching a topic."""
+    cfg = configuration(config)
+    try:
+        people = who_knows_workspace(cfg, topic, project=project, limit=limit)
+    except Caught as exc:
+        fail("Who-knows", exc)
+    payload = [asdict(person) for person in people]
+    if json_output:
+        typer.echo(json.dumps({"people": payload}))
+        return
+    if not payload:
+        typer.echo("No authors.")
+        return
+    for rank, person in enumerate(payload, start=1):
+        typer.echo(
+            f"{rank}. {person['author']} ({person['score']:.4f}) records={person['records']}"
+        )
+
+
+@app.command()
+def recent(
+    config: ConfigOption = Path("lodestone.toml"),
+    project: Annotated[str | None, typer.Option()] = None,
+    since: Annotated[str | None, typer.Option()] = None,
+    limit: Annotated[int, typer.Option("--limit", "--n", min=1)] = 10,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """List the most recently updated records."""
+    cfg = configuration(config)
+    try:
+        result = recent_workspace(cfg, project=project, since=since, limit=limit)
+    except Caught as exc:
+        fail("Recent", exc)
+    if json_output:
+        typer.echo(json.dumps({"hits": result.packets or [asdict(hit) for hit in result.hits]}))
+        return
+    if not result.hits:
+        typer.echo("No records.")
+        return
+    for rank, hit in enumerate(result.hits, start=1):
+        typer.echo(f"{rank}. {hit.source}/{hit.ext_id} [{hit.kind}] {hit.updated_at}")
+
+
+@app.command()
+def stats(config: ConfigOption = Path("lodestone.toml")) -> None:
+    """Show record, source and query-log counts."""
+    cfg = configuration(config)
+    try:
+        typer.echo(json.dumps(stats_workspace(cfg), indent=2))
+    except Caught as exc:
+        fail("Stats", exc)
 
 
 @source_app.command("add")
