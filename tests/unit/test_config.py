@@ -126,6 +126,20 @@ def test_fr_005_runtime_secret_overrides_redaction_and_no_persistence(
     assert config.embed.secret("embed") is None
 
 
+def test_fr_064_provider_preset_snippets_validate(tmp_path: Path) -> None:
+    text = (ROOT / "docs/providers.md").read_text(encoding="utf-8")
+    blocks = text.split("```toml\n")[1:]
+    assert len(blocks) == 3
+    names = ["cerebras", "openai", "ollama"]
+    for name, block in zip(names, blocks, strict=True):
+        snippet = block.split("```", 1)[0]
+        path = tmp_path / f"{name}.toml"
+        path.write_text(snippet, encoding="utf-8")
+        config = load_config(path)
+        assert config.llm is not None
+        assert config.llm.base_url
+
+
 @pytest.mark.parametrize(
     "content",
     [

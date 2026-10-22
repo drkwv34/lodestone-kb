@@ -44,8 +44,9 @@ imports `lodestone.cli`.
 
 Import-linter contracts in `importlinter.ini` are the enforceable graph:
 
-- Layers: `cli` → `workspace` → `storage` → `config`
-- Lexical graph: `cli` → `workspace` → `ingest | lanes` → `distill | vectors` →
+- Layers: `cli` → `sdk` → `workspace` → `storage` → `config`
+- Lexical graph: `cli` → `sdk` → `workspace` → `experts` → `fusion` →
+  `rerank` → `ingest | lanes` → `distill | vectors` →
   `providers | chunking | connectors | storage` → `config_io` →
   `config | tokenize`
 
