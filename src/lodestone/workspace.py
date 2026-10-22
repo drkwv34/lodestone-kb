@@ -2,14 +2,17 @@
 """Workspace setup and connection lifetimes for local operations."""
 
 import sqlite3
+import time
 from pathlib import Path
 
 from lodestone.config import DEFAULT_TOML, Config, Prices, Source, load_config
 from lodestone.config_io import registry_text, replace_config
+from lodestone.experts import Expert, packets_for, recent, who_knows
 from lodestone.fusion.pipeline import fused_search
 from lodestone.ingest.embeddings import reindex_vectors
 from lodestone.ingest.pipeline import SyncReport, sync
 from lodestone.lanes.fts import Hit, LaneName, search
+from lodestone.lanes.grep import GrepError
 from lodestone.lanes.grep import search as grep_search
 from lodestone.lanes.result import SearchResult
 from lodestone.lanes.scope import Scope
@@ -18,6 +21,7 @@ from lodestone.providers import make_chat
 from lodestone.providers.offline import offline_scope
 from lodestone.storage.costs import summarise
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, open_database
+from lodestone.storage.queries import count_queries, log_query
 from lodestone.storage.records import get_record
 from lodestone.storage.registry import reconcile
 from lodestone.vectors.embedder import make_embedder
@@ -113,6 +117,8 @@ def search_workspace(
     decay: bool = True,
     explain: bool = False,
     regex: bool = False,
+    rerank: bool | None = None,
+    provider: str | None = None,
 ) -> list[Hit]:
     return search_result(
         config,
@@ -130,6 +136,8 @@ def search_workspace(
         decay=decay,
         explain=explain,
         regex=regex,
+        rerank=rerank,
+        provider=provider,
     ).hits
 
 
@@ -150,6 +158,8 @@ def search_result(
     decay: bool = True,
     explain: bool = False,
     regex: bool = False,
+    rerank: bool | None = None,
+    provider: str | None = None,
 ) -> SearchResult:
     sources = config.scoped_sources(project, sources)
     path = config.workspace.db_path
@@ -158,60 +168,258 @@ def search_result(
     scope = Scope(
         sources=sources, kinds=kinds, authors=authors, since=since, until=until, metadata=metadata
     )
+    started = time.monotonic()
     connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     try:
-        if lane is None:
-            guarded = offline or config.offline
-            with offline_scope(guarded):
-                embedder = make_embedder(config, offline=guarded)
-                try:
-                    return fused_search(
-                        connection,
-                        config,
-                        query,
-                        scope=scope,
-                        limit=limit,
-                        decay=decay,
-                        explain=explain,
-                        regex=regex,
-                        include_grep=regex,
-                        embedder=embedder,
-                    )
-                finally:
-                    closer = getattr(embedder, "close", None)
-                    if callable(closer):
-                        closer()
-        if lane == "grep":
-            return grep_search(connection, query, regex=regex, scope=scope, limit=limit)
-        if lane == "vec_card" or lane == "vec_chunk":
-            guarded = offline or config.offline
-            with offline_scope(guarded):
-                embedder = make_embedder(config, offline=guarded)
-                try:
-                    return vec_search(
-                        connection,
-                        query,
-                        lane=lane,
-                        embedder=embedder,
-                        scope=scope,
-                        limit=limit,
-                    )
-                finally:
-                    closer = getattr(embedder, "close", None)
-                    if callable(closer):
-                        closer()
-        hits = search(
+        result = _search_open(
             connection,
+            config,
             query,
             lane=lane,
             scope=scope,
             limit=limit,
-            rare_idf=config.retrieval.rare_idf,
-            rare_df_ratio=config.retrieval.rare_df_ratio,
+            offline=offline,
+            decay=decay,
+            explain=explain,
+            regex=regex,
+            rerank=rerank,
+            provider=provider,
         )
-        return SearchResult(hits, [], lane)
     finally:
         connection.close()
+    _log_query(
+        config,
+        query=query,
+        project=project,
+        lanes=result.lane or (lane or "fused"),
+        results=len(result.hits),
+        latency_ms=int((time.monotonic() - started) * 1000),
+    )
+    return result
+
+
+def _search_open(
+    connection: sqlite3.Connection,
+    config: Config,
+    query: str,
+    *,
+    lane: LaneName | None,
+    scope: Scope,
+    limit: int,
+    offline: bool,
+    decay: bool,
+    explain: bool,
+    regex: bool,
+    rerank: bool | None,
+    provider: str | None,
+) -> SearchResult:
+    if lane is None:
+        guarded = offline or config.offline
+        with offline_scope(guarded):
+            embedder = make_embedder(config, offline=guarded)
+            chat = None
+            want = config.retrieval.rerank if rerank is None else rerank
+            if want:
+                chosen = provider
+                if chosen is None and config.llm is not None and not guarded:
+                    chosen = "config"
+                chat = make_chat(config, chosen, offline=guarded)
+            try:
+                return fused_search(
+                    connection,
+                    config,
+                    query,
+                    scope=scope,
+                    limit=limit,
+                    decay=decay,
+                    explain=explain,
+                    regex=regex,
+                    include_grep=regex,
+                    embedder=embedder,
+                    rerank=rerank,
+                    chat=chat,
+                )
+            finally:
+                for client in (embedder, chat):
+                    closer = getattr(client, "close", None)
+                    if callable(closer):
+                        closer()
+    if lane == "grep":
+        try:
+            return grep_search(connection, query, regex=regex, scope=scope, limit=limit)
+        except GrepError as exc:
+            raise ValueError(str(exc)) from exc
+    if lane == "vec_card" or lane == "vec_chunk":
+        guarded = offline or config.offline
+        with offline_scope(guarded):
+            embedder = make_embedder(config, offline=guarded)
+            try:
+                return vec_search(
+                    connection,
+                    query,
+                    lane=lane,
+                    embedder=embedder,
+                    scope=scope,
+                    limit=limit,
+                )
+            finally:
+                closer = getattr(embedder, "close", None)
+                if callable(closer):
+                    closer()
+    hits = search(
+        connection,
+        query,
+        lane=lane,
+        scope=scope,
+        limit=limit,
+        rare_idf=config.retrieval.rare_idf,
+        rare_df_ratio=config.retrieval.rare_df_ratio,
+    )
+    return SearchResult(hits, [], lane)
+
+
+def _log_query(
+    config: Config, *, query: str, project: str | None, lanes: str, results: int, latency_ms: int
+) -> None:
+    connection = open_database(config.workspace.db_path)
+    try:
+        with connection:
+            log_query(
+                connection,
+                query=query,
+                project=project or config.workspace.default_project,
+                lanes=lanes,
+                results=results,
+                latency_ms=latency_ms,
+                store_text=config.log.store_queries,
+            )
+    finally:
+        connection.close()
+
+
+def grep_workspace(
+    config: Config,
+    pattern: str,
+    *,
+    regex: bool = False,
+    project: str | None = None,
+    sources: list[str] | None = None,
+    path_glob: str | None = None,
+    context: int = 2,
+    limit: int = 20,
+) -> SearchResult:
+    started = time.monotonic()
+    scope = Scope(sources=config.scoped_sources(project, sources))
+    path = config.workspace.db_path
+    if inspect_database(path) != SCHEMA_VERSION:
+        raise StorageError("Database requires migration; run lodestone init")
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        try:
+            result = grep_search(
+                connection, pattern, regex=regex, scope=scope, limit=limit, context=context
+            )
+        except GrepError as exc:
+            raise ValueError(str(exc)) from exc
+        if path_glob:
+            from fnmatch import fnmatch
+
+            kept = [
+                (hit, match)
+                for hit, match in zip(result.hits, result.matches, strict=False)
+                if fnmatch(hit.ext_id, path_glob) or fnmatch(hit.uri, path_glob)
+            ]
+            result.hits = [item[0] for item in kept]
+            result.matches = [item[1] for item in kept]
+    finally:
+        connection.close()
+    _log_query(
+        config,
+        query=pattern,
+        project=project,
+        lanes="grep",
+        results=len(result.hits),
+        latency_ms=int((time.monotonic() - started) * 1000),
+    )
+    return result
+
+
+def who_knows_workspace(
+    config: Config, topic: str, *, project: str | None = None, limit: int = 5
+) -> list[Expert]:
+    sources = config.scoped_sources(project)
+    path = config.workspace.db_path
+    if inspect_database(path) != SCHEMA_VERSION:
+        raise StorageError("Database requires migration; run lodestone init")
+    started = time.monotonic()
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        people = who_knows(connection, config, topic, scope=Scope(sources=sources), limit=limit)
+    finally:
+        connection.close()
+    _log_query(
+        config,
+        query=topic,
+        project=project,
+        lanes="who_knows",
+        results=len(people),
+        latency_ms=int((time.monotonic() - started) * 1000),
+    )
+    return people
+
+
+def recent_workspace(
+    config: Config,
+    *,
+    project: str | None = None,
+    since: str | None = None,
+    limit: int = 10,
+    sources: list[str] | None = None,
+    kinds: list[str] | None = None,
+) -> SearchResult:
+    sources = config.scoped_sources(project, sources)
+    path = config.workspace.db_path
+    if inspect_database(path) != SCHEMA_VERSION:
+        raise StorageError("Database requires migration; run lodestone init")
+    started = time.monotonic()
+    scope = Scope(sources=sources, kinds=kinds, since=since)
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        hits = recent(connection, scope, limit=limit)
+        packets = packets_for(connection, hits)
+    finally:
+        connection.close()
+    _log_query(
+        config,
+        query="",
+        project=project,
+        lanes="recent",
+        results=len(hits),
+        latency_ms=int((time.monotonic() - started) * 1000),
+    )
+    return SearchResult(hits, [], "recent", packets)
+
+
+def stats_workspace(config: Config) -> dict[str, object]:
+    path = config.workspace.db_path
+    if inspect_database(path) != SCHEMA_VERSION:
+        raise StorageError("Database requires migration; run lodestone init")
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        records = int(
+            connection.execute("SELECT count(*) FROM records WHERE tombstoned=0").fetchone()[0]
+        )
+        sources = int(connection.execute("SELECT count(*) FROM sources").fetchone()[0])
+        queries = count_queries(connection)
+    finally:
+        connection.close()
+    return {
+        "records": records,
+        "sources": sources,
+        "schema_version": SCHEMA_VERSION,
+        "query_log": queries,
+        "store_queries": config.log.store_queries,
+    }
 
 
 def reindex_workspace(config: Config, *, lanes: list[str], offline: bool = False) -> dict[str, int]:
