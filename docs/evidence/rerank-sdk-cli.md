@@ -49,6 +49,8 @@ Changes:
 
 ```text
 $ git log e86ec73..HEAD --format='%h %an <%ae> | %cn <%ce>'
+34ebb85 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+f47ad54 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 6794c86 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 1196b1c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 756b4e8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -151,5 +153,47 @@ Offline `--rerank` without a chat provider keeps fused order and adds a notice.
 
 ## CI
 
-PR-head CI URL and `conclusion: success` will be recorded after the GitHub
-Actions run on this branch completes.
+Final implementation PR head `34ebb85fc12b013b977b408c3b827e00d1796157`.
+All nine jobs `completed` / `success`, including `test (macos-latest, 3.12)`.
+
+```text
+https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588
+conclusion: success
+```
+
+```json
+{
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588",
+  "head_sha": "34ebb85fc12b013b977b408c3b827e00d1796157",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "licenses", "status": "completed", "conclusion": "success"},
+    {"name": "openspec", "status": "completed", "conclusion": "success"},
+    {"name": "build", "status": "completed", "conclusion": "success"},
+    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"}
+  ]
+}
+```
+
+```text
+$ gh pr checks 11
+build	pass	24s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950524046
+licenses	pass	25s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950523510
+lint-type	pass	30s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950524050
+openspec	pass	10s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950523894
+test (macos-latest, 3.12)	pass	1m21s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950780135
+test (ubuntu-latest, 3.11)	pass	1m12s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950779996
+test (ubuntu-latest, 3.12)	pass	1m5s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950780108
+test (ubuntu-latest, 3.13)	pass	1m9s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950780009
+test (windows-latest, 3.12, true)	pass	1m10s	https://github.com/drkwv34/lodestone-kb/actions/runs/39814841588/job/119950780201
+```
+
+Python 3.13 first failed on `test_fr_051_cli_help_snapshots` when Rich emitted
+ANSI under `FORCE_COLOR`. `34ebb85` compares unstyled help and that run is the
+green PR head above.
