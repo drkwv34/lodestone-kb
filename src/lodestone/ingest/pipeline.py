@@ -252,6 +252,7 @@ def _write_bursts(
         metadata = {
             **item.metadata,
             "message_ids": json.dumps([message.id for message in burst.messages]),
+            "reactions": burst.reactions,
         }
         connection.execute(
             "INSERT INTO records(source_id,ext_id,parent_id,kind,seq,title,text,context_prefix,"

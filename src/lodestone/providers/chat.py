@@ -49,6 +49,19 @@ def extract_json(text: str) -> str:
     return payload
 
 
+def parse_json(text: str) -> object:
+    cleaned = FENCE.sub("", text.strip())
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(cleaned):
+        if char in "{[":
+            try:
+                value, _end = decoder.raw_decode(cleaned[index:])
+            except json.JSONDecodeError:
+                continue
+            return value
+    raise ValueError("response did not contain JSON")
+
+
 class OpenAIChat:
     def __init__(
         self,

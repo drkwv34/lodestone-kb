@@ -7,7 +7,7 @@ from collections.abc import Callable
 from typing import Protocol
 
 from lodestone.config import Config
-from lodestone.providers.chat import ChatResult, OpenAIChat, ProviderError, extract_json
+from lodestone.providers.chat import ChatResult, OpenAIChat, ProviderError, extract_json, parse_json
 from lodestone.providers.fake import FakeLLM
 from lodestone.providers.offline import OfflineError, is_offline, offline_scope, reject_remote
 
@@ -52,5 +52,6 @@ __all__ = [
     "is_offline",
     "make_chat",
     "offline_scope",
+    "parse_json",
     "reject_remote",
 ]
