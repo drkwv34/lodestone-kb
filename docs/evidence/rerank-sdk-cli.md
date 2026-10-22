@@ -195,5 +195,91 @@ test (windows-latest, 3.12, true)	pass	1m10s	https://github.com/drkwv34/lodeston
 ```
 
 Python 3.13 first failed on `test_fr_051_cli_help_snapshots` when Rich emitted
-ANSI under `FORCE_COLOR`. `34ebb85` compares unstyled help and that run is the
-green PR head above.
+ANSI under `FORCE_COLOR`. `34ebb85` compares unstyled help.
+
+Final PR head `710f497de4844d911edee7b62e873da747db497a` (docs-only evidence
+commit) was also `success`, all nine jobs including macOS:
+
+```text
+https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696
+conclusion: success
+```
+
+```text
+$ gh pr checks 11
+build	pass	24s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956728757
+licenses	pass	26s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956728688
+lint-type	pass	28s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956728857
+openspec	pass	9s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956729113
+test (macos-latest, 3.12)	pass	1m57s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956993904
+test (ubuntu-latest, 3.11)	pass	1m2s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956993195
+test (ubuntu-latest, 3.12)	pass	1m3s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956993208
+test (ubuntu-latest, 3.13)	pass	1m0s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956993273
+test (windows-latest, 3.12, true)	pass	1m18s	https://github.com/drkwv34/lodestone-kb/actions/runs/39816636696/job/119956993456
+```
+
+## Merge and archive
+
+Merge commit: `deedf9b0c8b3ce364132794d90eed9f8faf90b58`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. No co-author
+trailers.
+
+```text
+$ git merge --no-ff feat/rerank-sdk-cli -m "Merge pull request #11 from drkwv34/feat/rerank-sdk-cli"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%n%B'
+deedf9b0c8b3ce364132794d90eed9f8faf90b58
+deedf9b Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+Merge pull request #11 from drkwv34/feat/rerank-sdk-cli
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   e86ec73..deedf9b  main -> main
+```
+
+GitHub recorded the PR as merged:
+
+```text
+$ gh pr view 11 --json state,mergedAt,mergeCommit,url,headRefOid
+{"headRefOid":"710f497de4844d911edee7b62e873da747db497a","mergeCommit":{"oid":"deedf9b0c8b3ce364132794d90eed9f8faf90b58"},"mergedAt":"2026-10-22T16:50:58Z","state":"MERGED","url":"https://github.com/drkwv34/lodestone-kb/pull/11"}
+```
+
+```text
+$ openspec archive add-rerank-sdk-cli --yes
+Task status: ✓ Complete
+
+Specs to update:
+  fusion-search: update
+  rerank-sdk-cli: create
+Applying changes to openspec/specs/fusion-search/spec.md:
+  + 1 added
+Applying changes to openspec/specs/rerank-sdk-cli/spec.md:
+  + 7 added
+Totals: + 8, ~ 0, - 0, → 0
+Specs updated successfully.
+Change 'add-rerank-sdk-cli' archived as '2026-10-22-add-rerank-sdk-cli'.
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/lexical-search
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 9 passed, 0 failed (9 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
