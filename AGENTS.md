@@ -16,6 +16,8 @@ commands under `.cursor/commands/` (`/opsx-propose`, `/opsx-apply`,
 ```
 src/lodestone/          import package (CLI entry: lodestone.cli:app)
   cli.py                Typer CLI
+  mcp_server.py         read-only MCP stdio server
+  ask/                  planner, executor, sufficiency, synthesis
   workspace.py          workspace orchestration above storage
   config.py             typed TOML schema
   config_io.py          config load/save
@@ -65,12 +67,12 @@ ruff format --check .
 mypy --strict src
 lint-imports --config importlinter.ini
 python scripts/check_modules.py
-pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=80
+pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=85
 python -m build
 ```
 
 CI runs the same lint, type, import, module-size, coverage, OpenSpec, license
-and wheel jobs. Coverage is also gated by `[tool.coverage.report] fail_under = 80`
+and wheel jobs. Coverage is also gated by `[tool.coverage.report] fail_under = 85`
 in `pyproject.toml`. Default pytest excludes `@pytest.mark.network` and
 `@pytest.mark.perf`. Install OpenSpec with
 `npm i -g @fission-ai/openspec@latest` when editing specs.

@@ -10,8 +10,9 @@
 Local Markdown/text, code and JSONL thread ingestion, structural chunking,
 distilled cards, lexical search and optional embeddings are available through
 `init`, `doctor`, `config show`, `source add/list/remove/sync`, `sync`,
-`search`, `grep`, `get`, `who-knows`, `recent`, `stats` and `reindex`.
-The Python SDK is `Lodestone.open`. No automatic PyPI publishing is configured.
+`search`, `grep`, `get`, `who-knows`, `recent`, `ask`, `mcp`, `stats` and
+`reindex`. The Python SDK is `Lodestone.open`. See [docs/mcp.md](docs/mcp.md)
+for Claude Code and Cursor config. No automatic PyPI publishing is configured.
 
 ## Why
 
@@ -52,6 +53,8 @@ lodestone search "ERR_MANIFEST_TIMEOUT"
 lodestone grep "ERR_MANIFEST_TIMEOUT"
 lodestone who-knows "manifest"
 lodestone recent --limit 5
+lodestone ask "Why does restore stall?" --provider fake --offline
+lodestone mcp --offline
 lodestone stats
 lodestone search "ERR_MANIFEST_TIMEOUT" --lane vec_card --offline --explain --json
 lodestone reindex --lanes vec --offline
