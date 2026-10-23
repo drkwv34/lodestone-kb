@@ -1,0 +1,19 @@
+                                                                                
+ Usage: root ask [OPTIONS] {question}                                           
+                                                                                
+ Answer a question with citations from retrieved evidence.                      
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    question      <str>  [required]                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config      -c      <path>  Path to lodestone.toml.                        │
+│                               [default: lodestone.toml]                      │
+│ --project             <str>                                                  │
+│ --max-rounds          <int>                                                  │
+│ --provider            <str>   fake or config.                                │
+│ --offline                                                                    │
+│ --json                                                                       │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
