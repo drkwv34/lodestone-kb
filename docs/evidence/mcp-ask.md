@@ -51,6 +51,7 @@ Changes:
 
 ```text
 $ git log 94ea1e9..HEAD --format='%h %an <%ae> | %cn <%ce>'
+a887390 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 4072639 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 3258631 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 a111189 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -71,8 +72,48 @@ Required test coverage of 85% reached. Total coverage: 92.64%
 
 ## CI
 
-PR-head CI URL and `conclusion: success` are recorded after the GitHub Actions
-run on the PR head SHA completes.
+PR head `a88739073991cf533c98bebc3f12212449dcfa1d`. Run URL:
+
+https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170
+
+```text
+conclusion: success
+```
+
+```json
+{
+  "url": "https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170",
+  "head_sha": "a88739073991cf533c98bebc3f12212449dcfa1d",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "lint-type", "status": "completed", "conclusion": "success"},
+    {"name": "openspec", "status": "completed", "conclusion": "success"},
+    {"name": "licenses", "status": "completed", "conclusion": "success"},
+    {"name": "build", "status": "completed", "conclusion": "success"},
+    {"name": "test (windows-latest, 3.12, true)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.11)", "status": "completed", "conclusion": "success"},
+    {"name": "test (macos-latest, 3.12)", "status": "completed", "conclusion": "success"},
+    {"name": "test (ubuntu-latest, 3.13)", "status": "completed", "conclusion": "success"}
+  ]
+}
+```
+
+```text
+$ gh pr checks 12
+build	pass	30s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120525976719
+licenses	pass	27s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120525976667
+lint-type	pass	32s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120525976469
+openspec	pass	8s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120525976652
+test (macos-latest, 3.12)	pass	1m25s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120526252895
+test (ubuntu-latest, 3.11)	pass	1m3s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120526252892
+test (ubuntu-latest, 3.12)	pass	52s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120526252819
+test (ubuntu-latest, 3.13)	pass	55s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120526253001
+test (windows-latest, 3.12, true)	pass	1m17s	https://github.com/drkwv34/lodestone-kb/actions/runs/39986225170/job/120526252778
+```
+
+All nine jobs including macOS succeeded.
 
 ## Demo transcript
 
@@ -110,3 +151,84 @@ citations: ['E1', 'E2', 'E3']
 insufficient_evidence: False
 rounds: 1
 ```
+
+## Merge and archive
+
+Merge commit: `a798ece2115eb5138c0d784f6bd4323328eed388`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. No co-author
+trailers.
+
+```text
+$ git merge --no-ff feat/mcp-ask -m "Merge pull request #12 from drkwv34/feat/mcp-ask"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%n%B'
+a798ece2115eb5138c0d784f6bd4323328eed388
+a798ece Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+Merge pull request #12 from drkwv34/feat/mcp-ask
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   94ea1e9..a798ece  main -> main
+```
+
+GitHub recorded the PR as merged:
+
+```text
+$ gh pr view 12 --json state,mergedAt,mergeCommit,url,headRefOid
+{"headRefOid":"a88739073991cf533c98bebc3f12212449dcfa1d","mergeCommit":{"oid":"a798ece2115eb5138c0d784f6bd4323328eed388"},"mergedAt":"2026-10-23T16:32:25Z","state":"MERGED","url":"https://github.com/drkwv34/lodestone-kb/pull/12"}
+```
+
+```text
+$ git log 94ea1e9..HEAD --format='%h %an <%ae> | %cn <%ce>'
+a798ece Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+a887390 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+4072639 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+3258631 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+a111189 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+d0b7550 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log 94ea1e9..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
+```
+
+```text
+$ openspec archive add-mcp-server-and-ask --yes
+Task status: ✓ Complete
+
+Specs to update:
+  mcp-ask: create
+  repository-gates: update
+Applying changes to openspec/specs/mcp-ask/spec.md:
+  + 7 added
+Applying changes to openspec/specs/repository-gates/spec.md:
+  ~ 1 modified
+Totals: + 7, ~ 1, - 0, → 0
+Specs updated successfully.
+Change 'add-mcp-server-and-ask' archived as '2026-10-23-add-mcp-server-and-ask'.
+```
+
+```text
+$ openspec validate --all --strict
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 10 passed, 0 failed (10 items)
+```
+
+```text
+$ openspec list
+No active changes found.
+```
+

@@ -15,12 +15,14 @@ and Windows Python 3.12 smoke tests.
 - **THEN** init, doctor, config display and packaged migration resources work
 
 ### Requirement: NFR-012 initial quality gates
-CI SHALL enforce "NFR-012" at its initial ramp: coverage at least 70%, mypy --strict,
-Ruff lint and formatting, import boundaries, and modules no longer than 500 lines.
+CI SHALL enforce "NFR-012": coverage at least 85% of `src/lodestone`,
+mypy --strict, Ruff lint and formatting, import boundaries, and modules no
+longer than 500 lines.
 
 #### Scenario: Quality regression
 - **WHEN** any blocking gate fails
-- **THEN** the PR cannot be considered ready to merge and the check is preserved
+- **THEN** the PR cannot be considered ready to merge and the check is
+  preserved, including the 85% coverage gate
 
 ### Requirement: NFR-017 licensing
 The repository SHALL implement "NFR-017": full Apache-2.0 LICENSE, NOTICE, SPDX
