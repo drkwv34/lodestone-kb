@@ -30,6 +30,19 @@ def get_record(
     if row is None:
         raise KeyError(f"record not found: {ref}")
     card = json.loads(row[6]) if row[6] else None
+    children = [
+        {
+            "id": int(child[0]),
+            "kind": str(child[1] or ""),
+            "title": str(child[2] or ""),
+            "snippet": str(child[3] or "").replace("\n", " ")[:240],
+        }
+        for child in connection.execute(
+            "SELECT id, kind, title, substr(text,1,240) FROM records "
+            "WHERE parent_id=? AND tombstoned=0 ORDER BY seq, id",
+            (row[0],),
+        )
+    ]
     return {
         "id": row[0],
         "ext_id": row[1],
@@ -42,4 +55,5 @@ def get_record(
         "norm_text": row[8],
         "context_prefix": row[9],
         "metadata": json.loads(row[10]),
+        "children": children,
     }

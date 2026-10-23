@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +12,8 @@ from lodestone.experts import Expert
 from lodestone.fusion.packet import Evidence
 from lodestone.ingest.pipeline import SyncReport
 from lodestone.lanes.fts import LaneName
+from lodestone.storage.db import open_readonly
+from lodestone.storage.queries import query_log_enabled
 from lodestone.workspace import (
     get_workspace,
     grep_workspace,
@@ -66,7 +68,12 @@ class Stats:
 @dataclass(frozen=True)
 class Answer:
     text: str
+    citations: list[str] = field(default_factory=list)
+    rounds: int = 0
+    plan: list[dict[str, Any]] = field(default_factory=list)
+    cost: Cost = field(default_factory=Cost)
     insufficient_evidence: bool = True
+    unsupported_claims: bool = False
 
 
 def _evidence(payload: dict[str, object]) -> Evidence:
@@ -82,10 +89,18 @@ def _int(value: object) -> int:
 class Lodestone:
     """Open a workspace from a config path, directory, or Config object."""
 
-    def __init__(self, config: Config, *, offline: bool = False, path: Path | None = None) -> None:
+    def __init__(
+        self,
+        config: Config,
+        *,
+        offline: bool = False,
+        path: Path | None = None,
+        readonly: bool = False,
+    ) -> None:
         self._config = config
         self._offline = offline
         self._path = path
+        self._readonly = readonly
 
     @classmethod
     def open(
@@ -211,11 +226,83 @@ class Lodestone:
         result = recent_workspace(self._config, project=project, since=since, limit=limit)
         return [_evidence(packet) for packet in result.packets]
 
+    def _dispatch(self, tool: str, args: dict[str, Any]) -> object:
+        if tool == "search":
+            query = str(args.get("query") or "")
+            return self.search(
+                query,
+                project=args.get("project") if isinstance(args.get("project"), str) else None,
+                kinds=args.get("kinds") if isinstance(args.get("kinds"), list) else None,
+                sources=args.get("sources") if isinstance(args.get("sources"), list) else None,
+                since=args.get("since") if isinstance(args.get("since"), str) else None,
+                until=args.get("until") if isinstance(args.get("until"), str) else None,
+                limit=int(args["limit"]) if isinstance(args.get("limit"), int) else 10,
+                rerank=bool(args.get("rerank")) if args.get("rerank") is not None else False,
+                explain=bool(args.get("explain")) if args.get("explain") is not None else False,
+            )
+        if tool == "grep":
+            pattern = str(args.get("pattern") or args.get("query") or "")
+            return self.grep(
+                pattern,
+                regex=bool(args.get("regex")),
+                project=args.get("project") if isinstance(args.get("project"), str) else None,
+                path_glob=args.get("path_glob") if isinstance(args.get("path_glob"), str) else None,
+                context=int(args["context"]) if isinstance(args.get("context"), int) else 2,
+                limit=int(args["limit"]) if isinstance(args.get("limit"), int) else 20,
+            )
+        if tool == "who_knows":
+            topic = str(args.get("topic") or args.get("query") or "")
+            return self.who_knows(
+                topic,
+                project=args.get("project") if isinstance(args.get("project"), str) else None,
+                limit=int(args["limit"]) if isinstance(args.get("limit"), int) else 5,
+            )
+        if tool == "recent":
+            return self.recent(
+                project=args.get("project") if isinstance(args.get("project"), str) else None,
+                since=args.get("since") if isinstance(args.get("since"), str) else None,
+                limit=int(args["limit"]) if isinstance(args.get("limit"), int) else 10,
+            )
+        raise ValueError(f"unknown tool: {tool}")
+
     def ask(
-        self, question: str, *, project: str | None = None, max_rounds: int | None = None
+        self,
+        question: str,
+        *,
+        project: str | None = None,
+        max_rounds: int | None = None,
+        provider: str | None = None,
     ) -> Answer:
-        del question, project, max_rounds
-        raise NotImplementedError("ask is not implemented")
+        from lodestone.ask import run_ask
+        from lodestone.providers import make_chat
+
+        guarded = self._offline or self._config.offline
+        token = query_log_enabled.set(False) if self._readonly else None
+        connection = open_readonly(self._config.workspace.db_path)
+        try:
+            chat = make_chat(self._config, provider, offline=guarded)
+            result = run_ask(
+                question,
+                config=self._config,
+                connection=connection,
+                handler=self._dispatch,
+                chat=chat,
+                project=project,
+                max_rounds=max_rounds,
+            )
+        finally:
+            connection.close()
+            if token is not None:
+                query_log_enabled.reset(token)
+        return Answer(
+            text=result.text,
+            citations=list(result.citations),
+            rounds=result.rounds,
+            plan=list(result.plan),
+            cost=Cost(result.cost.in_tokens, result.cost.out_tokens, result.cost.usd),
+            insufficient_evidence=result.insufficient_evidence,
+            unsupported_claims=result.unsupported_claims,
+        )
 
     def stats(self) -> Stats:
         payload = stats_workspace(self._config)

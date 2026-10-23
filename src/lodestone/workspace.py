@@ -21,7 +21,7 @@ from lodestone.providers import make_chat
 from lodestone.providers.offline import offline_scope
 from lodestone.storage.costs import summarise
 from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, open_database
-from lodestone.storage.queries import count_queries, log_query
+from lodestone.storage.queries import count_queries, log_query, query_log_enabled
 from lodestone.storage.records import get_record
 from lodestone.storage.registry import reconcile
 from lodestone.vectors.embedder import make_embedder
@@ -281,6 +281,8 @@ def _search_open(
 def _log_query(
     config: Config, *, query: str, project: str | None, lanes: str, results: int, latency_ms: int
 ) -> None:
+    if not query_log_enabled.get():
+        return
     connection = open_database(config.workspace.db_path)
     try:
         with connection:

@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+from contextvars import ContextVar
 from datetime import UTC, datetime
+
+query_log_enabled: ContextVar[bool] = ContextVar("lodestone_query_log", default=True)
 
 
 def query_hash(query: str) -> str:

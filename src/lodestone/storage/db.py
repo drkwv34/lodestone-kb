@@ -92,3 +92,16 @@ def inspect_database(path: Path) -> int:
         return check_version(connection)
     finally:
         connection.close()
+
+
+def open_readonly(path: Path) -> sqlite3.Connection:
+    probe_fts5()
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    try:
+        check_version(connection)
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.execute("PRAGMA query_only=ON")
+    except (sqlite3.Error, StorageError):
+        connection.close()
+        raise
+    return connection

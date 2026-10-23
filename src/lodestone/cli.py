@@ -13,7 +13,15 @@ from typing import Annotated, Literal
 
 import typer
 
-from lodestone.config import Config, ConfigError, Source, load_config, redact
+from lodestone.cli_support import (
+    Caught,
+    ConfigOption,
+    ask_command,
+    configuration,
+    fail,
+    mcp_command,
+)
+from lodestone.config import ConfigError, Source, redact
 from lodestone.lanes.fts import LaneName
 from lodestone.lanes.scope import parse_metadata
 from lodestone.providers import OfflineError, ProviderError
@@ -38,38 +46,8 @@ config_app = typer.Typer(no_args_is_help=True)
 app.add_typer(config_app, name="config")
 source_app = typer.Typer(no_args_is_help=True)
 app.add_typer(source_app, name="source")
-ConfigOption = Annotated[Path, typer.Option("--config", "-c", help="Path to lodestone.toml.")]
-
-
-def configuration(path: Path) -> Config:
-    try:
-        return load_config(path)
-    except ConfigError as exc:
-        typer.echo(f"Configuration error: {exc}", err=True)
-        raise typer.Exit(2) from None
-
-
-def fail(action: str, exc: BaseException) -> None:
-    if isinstance(exc, (ConfigError, ValueError)):
-        typer.echo(f"Configuration error: {exc}", err=True)
-        raise typer.Exit(2) from None
-    if isinstance(exc, (ProviderError, OfflineError)):
-        typer.echo(f"Provider error: {exc}", err=True)
-        raise typer.Exit(3) from None
-    typer.echo(f"{action} error: {exc}", err=True)
-    raise typer.Exit(1) from None
-
-
-Caught = (
-    ConfigError,
-    ValueError,
-    ProviderError,
-    OfflineError,
-    OSError,
-    sqlite3.Error,
-    StorageError,
-    KeyError,
-)
+app.command("mcp")(mcp_command)
+app.command("ask")(ask_command)
 
 
 @app.command()
