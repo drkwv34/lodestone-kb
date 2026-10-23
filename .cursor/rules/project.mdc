@@ -10,7 +10,7 @@ Follow [AGENTS.md](../../AGENTS.md) at the repository root. Summarized rules:
 - Never edit existing files in `src/lodestone/storage/migrations/`; add a new numbered SQL file.
 - Storage (`lodestone.storage`) stays below retrieval (`lodestone.lanes` and later fusion). Honor `importlinter.ini` layer contracts; do not import `lodestone.cli` from below.
 - Tests named with FR IDs (`test_fr_001_...`). Default tests: no network, no paid APIs.
-- Never weaken, skip or delete a CI check. Coverage gate is 80% (`--cov-fail-under=80`).
+- Never weaken, skip or delete a CI check. Coverage gate is 85% (`--cov-fail-under=85`).
 - OpenSpec: propose → apply → `openspec validate --strict` → archive only after merge on `main`. Change names are verb-noun feature slugs.
 - Evidence in `docs/evidence/<feature>.md`; `docs/PROGRESS.md` rows by feature.
 - Cursor OpenSpec skills are under `.cursor/skills/`; commands are `/opsx-propose`, `/opsx-apply`, `/opsx-archive`, `/opsx-explore`, `/opsx-sync`, `/opsx-update`.

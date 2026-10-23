@@ -13,7 +13,7 @@ ruff format --check .
 mypy --strict src
 lint-imports --config importlinter.ini
 python scripts/check_modules.py
-pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=80
+pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=85
 ```
 
 Name tests with the requirement ID (`test_fr_001_...`). No paid APIs in tests.

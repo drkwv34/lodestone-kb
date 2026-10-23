@@ -1,0 +1,11 @@
+                                                                                
+ Usage: root mcp [OPTIONS]                                                      
+                                                                                
+ Run the read-only MCP stdio server.                                            
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config   -c      <path>  Path to lodestone.toml. [default: lodestone.toml] │
+│ --offline                                                                    │
+│ --help                     Show this message and exit.                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

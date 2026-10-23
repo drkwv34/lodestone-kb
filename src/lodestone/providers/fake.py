@@ -64,6 +64,14 @@ class FakeLLM:
             return json.dumps(rerank_by_overlap(blob))
         if "planner" in lower or "tool calls" in lower:
             return json.dumps(default_plan(blob))
+        if "sufficient" in lower or "need:<query>" in lower:
+            return "SUFFICIENT"
+        if "<evidence" in lower or "untrusted" in lower:
+            ids = re.findall(r'id="(E\d+)"', blob)
+            if not ids:
+                return "No supporting evidence is available."
+            cites = " ".join(f"[{label}]" for label in ids[:5])
+            return f"The retrieved records support this answer {cites}."
         return "{}" if json_mode else blob
 
     def close(self) -> None:
