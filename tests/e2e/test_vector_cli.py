@@ -66,5 +66,5 @@ def test_fr_033_fr_062_fr_083_offline_search_reindex_and_disabled_notice(tmp_pat
     blocked = runner.invoke(app, ["reindex", "--lanes", "vec", "--config", str(config_path)])
     assert blocked.exit_code == 2
     assert "embeddings are disabled" in blocked.output
-    unknown = runner.invoke(app, ["reindex", "--lanes", "fts", "--config", str(config_path)])
+    unknown = runner.invoke(app, ["reindex", "--lanes", "nope", "--config", str(config_path)])
     assert unknown.exit_code == 2
