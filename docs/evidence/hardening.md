@@ -138,6 +138,7 @@ Doctor: OK (deep checks passed)
 
 ```text
 $ git log 181b097..HEAD --format='%h %an <%ae> | %cn <%ce>'
+3915ee5 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 f79e14a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 02d5c7f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 0678a12 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -250,4 +251,29 @@ $ openspec list
 No active changes found.
 ```
 
-Main push CI on the archive commit is recorded after that commit is pushed.
+Archive commit: `3915ee514f75c97710e9eefd73491dbf17eb8549`. Author and committer
+are Christian Agila. OpenSpec archive name: `2026-10-26-add-hardening`.
+
+Main push CI on the archive commit, including macOS:
+https://github.com/drkwv34/lodestone-kb/actions/runs/40362948846
+
+```text
+$ gh run view 40362948846 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"3915ee514f75c97710e9eefd73491dbf17eb8549","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40362948846"}
+
+$ gh run view 40362948846
+
+✓ main ci · 40362948846
+Triggered via push
+
+JOBS
+✓ lint-type in 31s (ID 121712956116)
+✓ openspec in 11s (ID 121712956641)
+✓ licenses in 27s (ID 121712956774)
+✓ build in 30s (ID 121712956982)
+✓ test (ubuntu-latest, 3.12) in 1m28s (ID 121713264363)
+✓ test (ubuntu-latest, 3.13) in 1m34s (ID 121713264538)
+✓ test (ubuntu-latest, 3.11) in 1m22s (ID 121713264629)
+✓ test (macos-latest, 3.12) in 2m26s (ID 121713264675)
+✓ test (windows-latest, 3.12, true) in 1m44s (ID 121713264756)
+```
