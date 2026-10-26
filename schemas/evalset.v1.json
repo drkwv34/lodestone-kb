@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lodestone.local/schemas/evalset.v1.json",
+  "title": "evalset.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["qid", "question", "gold_ids", "category"],
+  "properties": {
+    "qid": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1 },
+    "gold_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "gold_answer_must_contain": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "exact_token",
+        "paraphrase",
+        "stale_vs_fresh",
+        "tangent_in_long_thread",
+        "multi_source",
+        "unanswerable"
+      ]
+    },
+    "source_hint": { "type": "string" }
+  }
+}

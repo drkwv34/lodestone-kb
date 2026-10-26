@@ -27,6 +27,8 @@ packages = ["src/lodestone"]
 "src/lodestone/prompts/card.v1.md" = "lodestone/prompts/card.v1.md"
 "src/lodestone/py.typed" = "lodestone/py.typed"
 "schemas/evidence.v1.json" = "lodestone/schemas/evidence.v1.json"
+"schemas/evalset.v1.json" = "lodestone/schemas/evalset.v1.json"
+"schemas/report.v1.json" = "lodestone/schemas/report.v1.json"
 
 [tool.ruff]
 line-length = 100
