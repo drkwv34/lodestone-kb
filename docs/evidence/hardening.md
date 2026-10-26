@@ -138,7 +138,10 @@ Doctor: OK (deep checks passed)
 
 ```text
 $ git log 181b097..HEAD --format='%h %an <%ae> | %cn <%ce>'
-# filled after commits land on feat/hardening
+0678a12 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+71c9f78 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+6c80e3f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+42175b4 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 
 $ git log 181b097..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
 0
