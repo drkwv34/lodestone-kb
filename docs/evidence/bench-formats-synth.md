@@ -48,10 +48,12 @@ Changes:
 - [x] FR-076: `test_fr_076_hash_embedder_caveat`, `test_fr_076_report_golden_stable`
 - [x] FR-051 bench: `test_fr_051_bench_commands`
 
-## Authorship (feature range)
+## Authorship (feature range through merge)
 
 ```text
 $ git log 1ca12ba..HEAD --format='%h %an <%ae> | %cn <%ce>'
+2af184f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+098eba6 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 a51f898 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 389b0e8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 77ac466 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -71,11 +73,33 @@ TOTAL                                          4437    306    93%
 Required test coverage of 85% reached. Total coverage: 93.10%
 ```
 
-## CI
+## CI (PR head)
 
 PR: https://github.com/drkwv34/lodestone-kb/pull/13
+PR head SHA: `098eba65ec659e85be73f2016cbe94e45abe7ad5`
+CI run URL: https://github.com/drkwv34/lodestone-kb/actions/runs/40345449259
+conclusion: success
 
-CI run URL pending GitHub Actions on this branch.
+```text
+$ gh run view 40345449259 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"098eba65ec659e85be73f2016cbe94e45abe7ad5","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40345449259"}
+
+$ gh run view 40345449259
+
+✓ feat/bench-formats-synth ci drkwv34/lodestone-kb#13 · 40345449259
+Triggered via pull_request about 6 minutes ago
+
+JOBS
+✓ build in 30s (ID 121651035912)
+✓ openspec in 9s (ID 121651035983)
+✓ licenses in 27s (ID 121651036216)
+✓ lint-type in 27s (ID 121651036309)
+✓ test (ubuntu-latest, 3.13) in 57s (ID 121651317798)
+✓ test (ubuntu-latest, 3.11) in 51s (ID 121651317916)
+✓ test (ubuntu-latest, 3.12) in 1m7s (ID 121651317921)
+✓ test (windows-latest, 3.12, true) in 1m26s (ID 121651318007)
+✓ test (macos-latest, 3.12) in 1m55s (ID 121651318067)
+```
 
 ## Offline demo (`lodestone bench synth|run`)
 
@@ -200,3 +224,91 @@ Generated: 2026-10-26T14:59:39+00:00
 ## Failures
 - none
 ```
+
+## Merge and archive
+
+Merge commit: `2af184fc82d77ca165856208fb9d34772ca328d1`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. No co-author
+trailers.
+
+```text
+$ git merge --no-ff feat/bench-formats-synth -m "Merge pull request #13 from drkwv34/feat/bench-formats-synth"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%n%B'
+2af184fc82d77ca165856208fb9d34772ca328d1
+2af184f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+Merge pull request #13 from drkwv34/feat/bench-formats-synth
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   1ca12ba..2af184f  main -> main
+```
+
+GitHub recorded the PR as merged:
+
+```text
+$ gh pr view 13 --json state,mergedAt,mergeCommit,url,headRefOid
+{"headRefOid":"098eba65ec659e85be73f2016cbe94e45abe7ad5","mergeCommit":{"oid":"2af184fc82d77ca165856208fb9d34772ca328d1"},"mergedAt":"2026-10-26T15:08:25Z","state":"MERGED","url":"https://github.com/drkwv34/lodestone-kb/pull/13"}
+```
+
+```text
+$ git log 1ca12ba..HEAD --format='%h %an <%ae> | %cn <%ce>'
+2af184f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+098eba6 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+a51f898 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+389b0e8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+77ac466 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+d13a321 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+36681cb Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log 1ca12ba..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
+```
+
+```text
+$ openspec validate --specs --strict
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 11 passed, 0 failed (11 items)
+
+$ openspec archive add-bench-formats-synth --yes
+Task status: ✓ Complete
+
+Specs to update:
+  bench-formats-synth: update
+Totals: + 0, ~ 0, - 0, → 0
+Specs already in sync; no files changed.
+Change 'add-bench-formats-synth' archived as '2026-10-26-add-bench-formats-synth'.
+
+$ openspec validate --all --strict
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 11 passed, 0 failed (11 items)
+
+$ openspec list
+No active changes found.
+```
+
