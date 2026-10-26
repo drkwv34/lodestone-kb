@@ -134,10 +134,12 @@ Deep: FTS, term_stats, embeddings, and orphans OK
 Doctor: OK (deep checks passed)
 ```
 
-## Authorship (feature branch, before merge)
+## Authorship
 
 ```text
 $ git log 181b097..HEAD --format='%h %an <%ae> | %cn <%ce>'
+f79e14a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+02d5c7f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 0678a12 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 71c9f78 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 6c80e3f Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -149,11 +151,103 @@ $ git log 181b097..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
 
 ## CI (PR head)
 
-PR: (filled after open)
-PR head SHA: (filled after push)
-CI run URL: (filled after green)
-conclusion: (filled after green, including macOS)
+PR: https://github.com/drkwv34/lodestone-kb/pull/15
+PR head SHA: `02d5c7ff5ff327b2ff5499b1efbc74ddbfd4804c`
+CI run URL: https://github.com/drkwv34/lodestone-kb/actions/runs/40362279807
+conclusion: success (including macOS)
+
+```text
+$ gh run view 40362279807 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"02d5c7ff5ff327b2ff5499b1efbc74ddbfd4804c","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40362279807"}
+
+$ gh run view 40362279807
+
+✓ feat/hardening ci #15 · 40362279807
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+✓ openspec in 9s (ID 121710591157)
+✓ lint-type in 35s (ID 121710591698)
+✓ licenses in 24s (ID 121710591807)
+✓ build in 26s (ID 121710592172)
+✓ test (ubuntu-latest, 3.13) in 1m20s (ID 121710930907)
+✓ test (windows-latest, 3.12, true) in 59s (ID 121710930929)
+✓ test (ubuntu-latest, 3.11) in 1m18s (ID 121710930943)
+✓ test (ubuntu-latest, 3.12) in 1m30s (ID 121710931072)
+✓ test (macos-latest, 3.12) in 1m36s (ID 121710931234)
+```
 
 ## Merge and archive
 
-Filled after local `--no-ff` merge, archive commit on main, and main push CI.
+Merge commit: `f79e14a0b23d47c6bd5608c791d3faa0aedfeeef`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. No co-author
+trailers.
+
+```text
+$ git merge --no-ff feat/hardening -m "Merge pull request #15 from drkwv34/feat/hardening"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%n%B'
+f79e14a0b23d47c6bd5608c791d3faa0aedfeeef
+f79e14a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+Merge pull request #15 from drkwv34/feat/hardening
+
+feat: plugin loader, crash safety, security hardening, and doctor --deep
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   181b097..f79e14a  main -> main
+```
+
+GitHub recorded the PR as merged:
+
+```text
+$ gh pr view 15 --json state,mergedAt,mergeCommit,url,headRefOid
+{"headRefOid":"02d5c7ff5ff327b2ff5499b1efbc74ddbfd4804c","mergeCommit":{"oid":"f79e14a0b23d47c6bd5608c791d3faa0aedfeeef"},"mergedAt":"2026-10-26T16:49:44Z","state":"MERGED","url":"https://github.com/drkwv34/lodestone-kb/pull/15"}
+```
+
+```text
+$ openspec archive add-hardening -y
+Task status: ✓ Complete
+Specs to update:
+  hardening: create
+  vector-lanes: update
+  workspace-foundation: update
+Applying changes to openspec/specs/hardening/spec.md:
+  + 10 added
+Applying changes to openspec/specs/vector-lanes/spec.md:
+  ~ 2 modified
+Applying changes to openspec/specs/workspace-foundation/spec.md:
+  ~ 1 modified
+Totals: + 10, ~ 3, - 0, → 0
+Specs updated successfully.
+Change 'add-hardening' archived as '2026-10-26-add-hardening'.
+
+$ openspec validate --all --strict
+✓ spec/bench-agentic-advise
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/hardening
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 13 passed, 0 failed (13 items)
+
+$ openspec validate --specs --strict
+Totals: 13 passed, 0 failed (13 items)
+
+$ openspec list
+No active changes found.
+```
+
+Main push CI on the archive commit is recorded after that commit is pushed.

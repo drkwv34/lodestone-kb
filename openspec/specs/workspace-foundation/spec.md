@@ -42,12 +42,19 @@ apply transactionally and opening a newer schema fails before mutation.
 - **THEN** a clear newer-schema error is returned and the database is preserved
 
 ### Requirement: FR-080 local diagnostics subset
-The CLI SHALL implement "FR-080" partially in the workspace foundation: report Python/SQLite versions,
-FTS5 availability, configuration errors and database schema; exit 1 on runtime errors.
+The CLI SHALL implement "FR-080": report Python/SQLite versions, FTS5
+availability, sqlite-vec availability, DB schema version, provider
+reachability only if configured and not offline, and config problems; exit 1
+if any error.
 
 #### Scenario: FTS5 unavailable
 - **WHEN** SQLite rejects FTS5 creation
 - **THEN** doctor exits 1 with an FTS5 error and Python-build remediation
+
+#### Scenario: sqlite-vec and provider probes
+- **WHEN** doctor runs on a valid workspace
+- **THEN** it reports sqlite-vec availability and, if a provider is configured
+  and the workspace is not offline, probes reachability
 
 ### Requirement: FR-005 secret redaction preview
 The CLI SHALL preview "FR-005" by recursively redacting config-show fields whose
