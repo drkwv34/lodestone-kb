@@ -1,18 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Typer subcommands for lodestone bench synth, run, and report."""
+"""Typer subcommands for lodestone bench synth, generate, run, report, and advise."""
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from lodestone.bench.advise import advise
 from lodestone.bench.evalset import EvalsetError
+from lodestone.bench.questions import DEFAULT_LEAKAGE_MAX, dump_evalset, generate_from_config
 from lodestone.bench.report import write_report
-from lodestone.bench.runner import run_bench
+from lodestone.bench.runner import load_run, run_bench
+from lodestone.bench.strategies import DEFAULT_CONTEXT_BUDGET
 from lodestone.bench.synth import generate
+from lodestone.config import ConfigError, load_config
+from lodestone.providers import FakeLLM, make_chat
 
 bench_app = typer.Typer(no_args_is_help=True, help="Offline RAG-strategy benchmark.")
 
@@ -40,6 +46,40 @@ def synth_cmd(
     typer.echo(f"corpus_hash {result.corpus_hash}")
 
 
+@bench_app.command("generate")
+def generate_cmd(
+    corpus: Annotated[Path, typer.Option("--corpus", help="Path to lodestone.toml.")],
+    out: Annotated[Path, typer.Option("--out")] = Path("evalset.jsonl"),
+    n: Annotated[int, typer.Option("--n", min=1)] = 200,
+    leakage_max: Annotated[float, typer.Option("--leakage-max")] = DEFAULT_LEAKAGE_MAX,
+    seed: Annotated[int, typer.Option("--seed")] = 42,
+    provider: Annotated[str, typer.Option("--provider")] = "fake",
+) -> None:
+    """Sample workspace records and write leakage-filtered evalset.v1 JSONL."""
+    try:
+        config = load_config(corpus)
+        chat = (
+            FakeLLM() if provider == "fake" else make_chat(config, provider, offline=config.offline)
+        )
+        generated = generate_from_config(config, n=n, chat=chat, leakage_max=leakage_max, seed=seed)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(dump_evalset(generated.rows), encoding="utf-8", newline="\n")
+        leak_path = out.with_name("leakage.json")
+        leak_path.write_text(
+            json.dumps(generated.leakage.dump(), indent=2) + "\n", encoding="utf-8"
+        )
+    except ConfigError as extra:
+        typer.echo(f"Configuration error: {extra}", err=True)
+        raise typer.Exit(2) from None
+    except ValueError as extra:
+        typer.echo(f"Configuration error: {extra}", err=True)
+        raise typer.Exit(2) from None
+    except OSError as extra:
+        _fail("Generate", extra)
+    typer.echo(f"wrote {len(generated.rows)} questions to {out}")
+    typer.echo(f"dropped {generated.leakage.dropped} leaking questions")
+
+
 @bench_app.command("run")
 def run_cmd(
     corpus: Annotated[Path, typer.Option("--corpus")],
@@ -47,11 +87,25 @@ def run_cmd(
     evalset: Annotated[Path | None, typer.Option("--evalset")] = None,
     strategies: Annotated[str, typer.Option("--strategies")] = "all",
     k: Annotated[int, typer.Option("--k", min=1)] = 20,
+    judge: Annotated[bool, typer.Option("--judge")] = False,
+    reps: Annotated[int, typer.Option("--reps", min=1)] = 1,
+    context_budget: Annotated[
+        int, typer.Option("--context-budget", min=1)
+    ] = DEFAULT_CONTEXT_BUDGET,
 ) -> None:
     """Validate evalset.v1, run strategies offline, and write report files."""
     eval_path = evalset or (corpus / "evalset.jsonl")
     try:
-        run = run_bench(corpus=corpus, evalset=eval_path, out=out, strategies=strategies, k=k)
+        run = run_bench(
+            corpus=corpus,
+            evalset=eval_path,
+            out=out,
+            strategies=strategies,
+            k=k,
+            judge=judge,
+            reps=reps,
+            context_budget=context_budget,
+        )
         write_report(out, run=asdict(run))
     except EvalsetError as extra:
         typer.echo(str(extra), err=True)
@@ -72,3 +126,23 @@ def report_cmd(run_dir: Annotated[Path, typer.Argument()]) -> None:
     except (OSError, ValueError, KeyError) as extra:
         _fail("Report", extra)
     typer.echo(str(markdown_path))
+
+
+@bench_app.command("advise")
+def advise_cmd(run_dir: Annotated[Path, typer.Argument()]) -> None:
+    """Emit a deterministic R1-R4 verdict from a bench report."""
+    try:
+        report_path = run_dir / "report.json"
+        payload = (
+            json.loads(report_path.read_text(encoding="utf-8"))
+            if report_path.is_file()
+            else load_run(run_dir / "results.json")
+        )
+        if not isinstance(payload, dict):
+            raise ValueError("report.json must be an object")
+        advice = advise(payload)
+        text = advice.render()
+        (run_dir / "advise.md").write_text(text, encoding="utf-8", newline="\n")
+    except (OSError, ValueError, KeyError) as extra:
+        _fail("Advise", extra)
+    typer.echo(text, nl=False)

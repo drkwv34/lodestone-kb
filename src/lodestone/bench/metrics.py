@@ -113,3 +113,48 @@ def latency_summary(samples_ms: Sequence[float]) -> dict[str, float]:
 
 def cost_usd(in_tokens: int, out_tokens: int, prices: Prices) -> float:
     return priced_usd(in_tokens, out_tokens, prices)
+
+
+def must_contain_score(answer: str, needles: Sequence[str] | None) -> float:
+    if not needles:
+        return 1.0
+    text = answer.lower()
+    hits = sum(1 for needle in needles if needle.lower() in text)
+    return hits / len(needles)
+
+
+def judge_score(
+    answer: str,
+    needles: Sequence[str] | None,
+    chat: object,
+) -> float:
+    from lodestone.providers.chat import parse_json
+
+    required = ", ".join(needles or [])
+    complete = getattr(chat, "complete", None)
+    if not callable(complete):
+        return must_contain_score(answer, needles)
+    result = complete(
+        [
+            {
+                "role": "user",
+                "content": (
+                    "Score between 0 and 1 whether the answer covers the required facts. "
+                    f"Required: {required}\nAnswer: {answer}\n"
+                    'Return JSON {"score": 0.0}.'
+                ),
+            }
+        ],
+        json_mode=True,
+        op="judge",
+    )
+    try:
+        payload = parse_json(getattr(result, "text", "") or "")
+    except (ValueError, TypeError):
+        return must_contain_score(answer, needles)
+    if isinstance(payload, dict) and "score" in payload:
+        try:
+            return max(0.0, min(1.0, float(payload["score"])))
+        except (TypeError, ValueError):
+            return must_contain_score(answer, needles)
+    return must_contain_score(answer, needles)

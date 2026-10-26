@@ -38,7 +38,10 @@ def caveats_for(run: dict[str, Any]) -> list[str]:
         if item.get("status") == "skipped"
     ]
     notes.extend(skipped)
-    notes.append("leakage stats are a placeholder until real-corpus question generation")
+    leakage = run.get("leakage") or {}
+    histogram = leakage.get("histogram") if isinstance(leakage, dict) else None
+    if not histogram:
+        notes.append("leakage stats are a placeholder until real-corpus question generation")
     return notes
 
 
@@ -55,8 +58,15 @@ def report_payload(run: dict[str, Any], *, generated_at: str | None = None) -> d
                 "status": item.get("status"),
                 "skipped_reason": item.get("skipped_reason"),
                 **{key: metrics.get(key) for key in METRIC_KEYS},
+                "correctness": metrics.get("correctness"),
+                "correctness_lo": metrics.get("correctness_lo"),
+                "correctness_hi": metrics.get("correctness_hi"),
+                "recall@10_lo": metrics.get("recall@10_lo"),
+                "recall@10_hi": metrics.get("recall@10_hi"),
                 "index_seconds": item.get("index_seconds", 0.0),
                 "index_bytes": item.get("index_bytes", 0),
+                "usd": item.get("usd", 0.0),
+                "queries": item.get("queries", 0),
             }
         )
         by_category = item.get("by_category") or {}
@@ -80,8 +90,10 @@ def report_payload(run: dict[str, Any], *, generated_at: str | None = None) -> d
                 "p50_ms": item.get("p50_ms", 0.0),
                 "p95_ms": item.get("p95_ms", 0.0),
                 "p99_ms": item.get("p99_ms", 0.0),
+                "queries": item.get("queries", 0),
             }
         )
+    leakage = run.get("leakage") if isinstance(run.get("leakage"), dict) else None
     payload = {
         "schema": "report.v1",
         "generated_at": stamp,
@@ -92,7 +104,9 @@ def report_payload(run: dict[str, Any], *, generated_at: str | None = None) -> d
         "strategies": strategies,
         "categories": categories,
         "cost_latency": cost_latency,
-        "leakage": {"dropped": 0, "histogram": []},
+        "leakage": leakage or {"dropped": 0, "histogram": []},
+        "paired": run.get("paired") or {},
+        "category_paired": run.get("category_paired") or {},
         "caveats": caveats_for(run),
         "failures": list(run.get("failures") or []),
     }
@@ -173,7 +187,24 @@ def render_markdown(payload: dict[str, Any]) -> str:
                 ]
             )
         )
-    lines.extend(["", "## Leakage", "- dropped: 0", "- histogram: none", "", "## Caveats"])
+    leakage = payload.get("leakage") or {}
+    histogram = leakage.get("histogram") or []
+    hist_text = "none"
+    if histogram:
+        hist_text = "; ".join(
+            f"{row.get('lo', 0):.1f}-{row.get('hi', 0):.1f}:{row.get('count', 0)}"
+            for row in histogram
+        )
+    lines.extend(
+        [
+            "",
+            "## Leakage",
+            f"- dropped: {leakage.get('dropped', 0)}",
+            f"- histogram: {hist_text}",
+            "",
+            "## Caveats",
+        ]
+    )
     for note in payload["caveats"]:
         lines.append(f"- {note}")
     lines.extend(["", "## Failures"])
