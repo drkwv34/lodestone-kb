@@ -46,7 +46,8 @@ The system SHALL implement "FR-073" for `classic-rag` (512-token windows,
 overlap 64, dense only), `bm25-chunks`, `hybrid-chunks` (BM25 plus dense RRF
 k=60), and `lodestone-lexical` (cards plus raw FTS lanes, no embeddings). Each
 strategy SHALL expose `index(corpus)` and `retrieve(question, k)` returning
-ids. Unimplemented strategies SHALL be reported as skipped, never omitted.
+ids. Strategies that are skipped SHALL be reported as skipped with a reason,
+never omitted.
 
 #### Scenario: Offline strategies run on synth corpus
 - **WHEN** the four in-scope strategies index a `--threads 60` synthetic corpus
@@ -54,9 +55,10 @@ ids. Unimplemented strategies SHALL be reported as skipped, never omitted.
 - **THEN** each returns a list of ids and no paid API or network is used
 
 #### Scenario: Skipped strategies are reported
-- **WHEN** a run requests strategies that are not implemented in this change
-- **THEN** the report lists them as skipped with a reason and does not drop
-  them silently
+- **WHEN** a run includes a strategy that is skipped (for example
+  `full-context` over `context_budget_tokens`)
+- **THEN** the report lists it as skipped with a reason and does not drop it
+  silently
 
 ### Requirement: FR-074 retrieval cost latency metrics
 The system SHALL implement "FR-074" retrieval metrics: recall@{1,5,10,20}, MRR,
@@ -90,6 +92,11 @@ Body ordering SHALL be stable; timestamps appear only in the header.
 - **WHEN** a report is built from a fixture result with a fixed header time
 - **THEN** markdown body order is stable and no timestamp appears outside the
   header
+
+#### Scenario: Leakage histogram is present
+- **WHEN** question generation recorded leakage scores
+- **THEN** the report leakage section includes dropped count and a histogram
+  rather than an empty placeholder
 
 ### Requirement: Window chunker for bench baselines
 The system SHALL provide a fixed-window chunker of 512 tokens with overlap 64

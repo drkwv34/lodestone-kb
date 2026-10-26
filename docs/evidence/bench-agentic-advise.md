@@ -139,9 +139,130 @@ Generated: 2026-10-26T15:35:02+00:00
 
 ## CI (PR head)
 
-PR and CI URLs will be pasted after the pull request is opened and the
-macOS job is green.
+PR: https://github.com/drkwv34/lodestone-kb/pull/14
+PR head SHA: `efb38c1edbd3e923b7ed95ab9a958da10d7791fc`
+CI run URL: https://github.com/drkwv34/lodestone-kb/actions/runs/40351280476
+conclusion: success (including macOS)
+
+```text
+$ gh run view 40351280476 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"efb38c1edbd3e923b7ed95ab9a958da10d7791fc","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40351280476"}
+
+$ gh run view 40351280476
+
+✓ feat/bench-agentic-advise ci drkwv34/lodestone-kb#14 · 40351280476
+Triggered via pull_request about 13 minutes ago
+
+JOBS
+✓ openspec in 9s (ID 121671680705)
+✓ build in 32s (ID 121671681031)
+✓ lint-type in 33s (ID 121671681127)
+✓ licenses in 27s (ID 121671682561)
+✓ test (windows-latest, 3.12, true) in 1m8s (ID 121672026935)
+✓ test (ubuntu-latest, 3.11) in 52s (ID 121672026985)
+✓ test (ubuntu-latest, 3.13) in 1m12s (ID 121672027006)
+✓ test (macos-latest, 3.12) in 1m33s (ID 121672027028)
+✓ test (ubuntu-latest, 3.12) in 1m27s (ID 121672027131)
+```
+
+## Merge and archive
+
+Merge commit: `a4edd68546a69d5874656ea78b69d8c388c8247d`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. No co-author
+trailers.
+
+```text
+$ git merge --no-ff feat/bench-agentic-advise -m "Merge pull request #14 from drkwv34/feat/bench-agentic-advise"
+Merge made by the 'ort' strategy.
+```
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%n%B'
+a4edd68546a69d5874656ea78b69d8c388c8247d
+a4edd68 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+Merge pull request #14 from drkwv34/feat/bench-agentic-advise
+
+feat: bench agentic strategies, stats, and advise
+```
+
+```text
+$ git push origin main
+To https://github.com/drkwv34/lodestone-kb
+   349062d..a4edd68  main -> main
+```
+
+GitHub recorded the PR as merged:
+
+```text
+$ gh pr view 14 --json state,mergedAt,mergeCommit,url,headRefOid
+{"headRefOid":"efb38c1edbd3e923b7ed95ab9a958da10d7791fc","mergeCommit":{"oid":"a4edd68546a69d5874656ea78b69d8c388c8247d"},"mergedAt":"2026-10-26T15:53:15Z","state":"MERGED","url":"https://github.com/drkwv34/lodestone-kb/pull/14"}
+```
+
+```text
+$ git log 349062d..HEAD --format='%h %an <%ae> | %cn <%ce>'
+a4edd68 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+efb38c1 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+c364294 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+814eb7b Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+bb57470 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+aea40e2 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log 349062d..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
+```
+
+```text
+$ openspec validate --specs --strict
+✓ spec/bench-agentic-advise
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 12 passed, 0 failed (12 items)
+
+$ openspec archive add-bench-agentic-advise --yes
+Task status: ✓ Complete
+
+Specs to update:
+  bench-agentic-advise: create
+  bench-formats-synth: update
+Applying changes to openspec/specs/bench-agentic-advise/spec.md:
+  + 6 added
+Applying changes to openspec/specs/bench-formats-synth/spec.md:
+  ~ 2 modified
+Totals: + 6, ~ 2, - 0, → 0
+Specs updated successfully.
+Change 'add-bench-agentic-advise' archived as '2026-10-26-add-bench-agentic-advise'.
+
+$ openspec validate --all --strict
+✓ spec/bench-agentic-advise
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/fusion-search
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 12 passed, 0 failed (12 items)
+
+$ openspec list
+No active changes found.
+```
+
+Main CI (archive commit, including macOS) will be pasted after the push job
+completes.
 
 ## Authorship (feature range)
 
-Recorded after merge. Zero `Co-authored-by` / `cursor[bot]` trailers.
+Zero `Co-authored-by` / `cursor[bot]` trailers. See the merge log above.
