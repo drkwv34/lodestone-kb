@@ -6,7 +6,9 @@ from __future__ import annotations
 import contextlib
 import json
 import re
+import shutil
 import sqlite3
+import subprocess
 import time
 
 from lodestone.lanes.fts import Hit
@@ -37,6 +39,29 @@ def compile_pattern(pattern: str, *, regex: bool) -> re.Pattern[str]:
         return re.compile(source)
     except re.error as exc:
         raise GrepError(f"invalid regex: {exc}") from None
+
+
+def rg_argv(pattern: str, roots: list[str], *, regex: bool) -> list[str]:
+    """Build an argument array for rg; never pass a shell string."""
+    command = ["rg", "--no-heading", "--line-number", "--color", "never"]
+    if not regex:
+        command.append("-F")
+    command.extend(["-e", pattern, "--", *roots])
+    return command
+
+
+def run_rg(
+    pattern: str, roots: list[str], *, regex: bool = False
+) -> subprocess.CompletedProcess[str]:
+    if shutil.which("rg") is None:
+        raise GrepError("rg is not on PATH")
+    return subprocess.run(  # noqa: S603
+        rg_argv(pattern, roots, regex=regex),
+        check=False,
+        capture_output=True,
+        text=True,
+        shell=False,
+    )
 
 
 def _snippet(lines: list[str], index: int, context: int) -> str:

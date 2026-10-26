@@ -8,9 +8,10 @@ import pytest
 from lodestone.config import Config, Embed, Source, load_config
 from lodestone.ingest.embeddings import reindex_vectors
 from lodestone.ingest.pipeline import sync
+from lodestone.ingest.reindex import reindex_workspace
 from lodestone.lanes.vec import search as vec_search
 from lodestone.vectors.hash import HASH_DIM, HASH_MODEL, HashEmbedder
-from lodestone.workspace import initialise, reindex_workspace, search_result, sync_workspace
+from lodestone.workspace import initialise, search_result, sync_workspace
 from tests.integration.test_thread_ingest import (
     cerebras_messages,
     config_for,
@@ -186,5 +187,5 @@ def test_fr_033_fr_083_workspace_search_result_and_reindex(tmp_path: Path) -> No
     assert any("skipped" in notice for notice in disabled.notices)
     counts = reindex_workspace(config, lanes=["vec"], offline=True)
     assert counts["before"] == counts["after"]
-    with pytest.raises(ValueError, match="only --lanes vec"):
-        reindex_workspace(config, lanes=["fts"])
+    with pytest.raises(ValueError, match="unknown reindex lane"):
+        reindex_workspace(config, lanes=["nope"])

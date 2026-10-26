@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 from collections.abc import Callable
 
@@ -29,13 +30,15 @@ class FakeLLM:
         self.model = model
         self.log = log
         self.calls: list[list[dict[str, str]]] = []
+        self._lock = threading.Lock()
 
     def complete(
         self, messages: list[dict[str, str]], *, json_mode: bool = False, op: str = "chat"
     ) -> ChatResult:
         started = time.monotonic()
-        self.calls.append(messages)
-        text = self.script.pop(0) if self.script else self._rule(messages, json_mode=json_mode)
+        with self._lock:
+            self.calls.append(messages)
+            text = self.script.pop(0) if self.script else self._rule(messages, json_mode=json_mode)
         result = ChatResult(
             text=text,
             model=self.model,

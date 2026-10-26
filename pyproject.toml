@@ -50,8 +50,12 @@ python_version = "3.11"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["perf: performance tests", "network: needs network (opt-in)"]
-addopts = "--strict-markers -m 'not perf and not network'"
+markers = [
+    "perf: performance tests",
+    "network: needs network (opt-in)",
+    "slow: long-running opt-in tests",
+]
+addopts = "--strict-markers -m 'not perf and not network and not slow'"
 
 [tool.coverage.run]
 source = ["lodestone"]

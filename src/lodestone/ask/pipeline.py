@@ -11,9 +11,9 @@ from typing import Any
 from lodestone.ask.executor import EvidenceItem, execute_calls, normalise
 from lodestone.ask.planner import build_catalog, fallback_plan, plan_calls
 from lodestone.ask.sufficiency import check_sufficiency
-from lodestone.ask.synthesis import synthesise
+from lodestone.ask.synthesis import heuristic_answer, synthesise, validate_citations
 from lodestone.config import Config
-from lodestone.providers.chat import ChatResult, estimate_tokens
+from lodestone.providers.chat import ChatResult, ProviderError, estimate_tokens
 
 Dispatcher = Callable[[str, dict[str, Any]], Any]
 
@@ -85,7 +85,14 @@ def run_ask(
                 insufficient_evidence=True,
                 logged_rounds=logged,
             )
-        draft, citations, unsupported, synthesised = synthesise(question, collected, chat)
+        try:
+            draft, citations, unsupported, synthesised = synthesise(question, collected, chat)
+        except ProviderError as extra:
+            fallback, citations, unsupported = validate_citations(
+                heuristic_answer(collected), collected
+            )
+            draft = f"Provider error: {extra}. Partial evidence: {fallback}"
+            synthesised = None
         _add_cost(cost, synthesised)
         if round_index >= rounds_limit - 1:
             break

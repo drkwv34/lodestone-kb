@@ -168,7 +168,7 @@ class Log(Model):
 
 class Source(Model):
     name: str = Field(min_length=1)
-    kind: Literal["files", "threads"]
+    kind: str = Field(min_length=1, pattern=r"^[A-Za-z][A-Za-z0-9_-]*$")
     path: Path
     include: list[str] = Field(default_factory=list)
     exclude: list[str] = Field(default_factory=list)
