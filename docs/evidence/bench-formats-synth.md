@@ -52,6 +52,7 @@ Changes:
 
 ```text
 $ git log 1ca12ba..HEAD --format='%h %an <%ae> | %cn <%ce>'
+a51f898 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 389b0e8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 77ac466 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 d13a321 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -72,7 +73,9 @@ Required test coverage of 85% reached. Total coverage: 93.10%
 
 ## CI
 
-PR head and run URL pending GitHub Actions on this branch.
+PR: https://github.com/drkwv34/lodestone-kb/pull/13
+
+CI run URL pending GitHub Actions on this branch.
 
 ## Offline demo (`lodestone bench synth|run`)
 
