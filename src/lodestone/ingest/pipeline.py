@@ -3,42 +3,42 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sqlite3
-import unicodedata
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from itertools import chain
 
 from lodestone.chunking import code, markdown
 from lodestone.config import Chunks, Config, Source
-from lodestone.connectors.files import CODE_KINDS, FilesConnector, RawItem
-from lodestone.connectors.threads import ThreadsConnector
+from lodestone.connectors.files import CODE_KINDS, RawItem
+from lodestone.connectors.plugins import connector_for
 from lodestone.distill.apply import (
     CardStats,
-    apply_cards,
+    CardWork,
     bind_log,
+    commit_generated_card,
     contextualize_children,
+    flush_cost_log,
+    generate_card,
+    pending_card_work,
     requeue_embeddings,
 )
-from lodestone.ingest.bursts import qualifying_bursts
+from lodestone.distill.schema import Card
+from lodestone.ingest.concurrency import map_bounded
+from lodestone.ingest.crash import maybe_crash
 from lodestone.ingest.embeddings import apply_embeddings
+from lodestone.ingest.hashing import CHUNKER_VERSION, content_hash
+from lodestone.ingest.thread_sync import ingest_thread_lexical, refresh_burst_prefixes
+from lodestone.observe import timed
 from lodestone.providers import Chat
 from lodestone.providers.chat import ChatResult
 from lodestone.storage.costs import log_call
 from lodestone.storage.registry import reconcile, register
-from lodestone.storage.terms import idf as term_idf
 from lodestone.vectors.embedder import Embedder
 from lodestone.vectors.openai_compat import OpenAICompatEmbedder
 
-CHUNKER_VERSION = markdown.VERSION + "/" + code.VERSION
-THREAD_VERSION = "thread-v1"
-
-
-def content_hash(text: str, version: str = CHUNKER_VERSION) -> str:
-    normalised = unicodedata.normalize("NFC", text.replace("\r\n", "\n").replace("\r", "\n"))
-    return hashlib.sha256((version + "\x00" + normalised).encode("utf-8")).hexdigest()
+__all__ = ["CHUNKER_VERSION", "SyncReport", "content_hash", "sync", "upsert"]
 
 
 @dataclass
@@ -53,28 +53,22 @@ class SyncReport:
     cache_misses: int = 0
     cards_llm: int = 0
     cards_heuristic: int = 0
-
-
-def connector_for(source: Source) -> FilesConnector | ThreadsConnector:
-    if source.kind == "files":
-        return FilesConnector()
-    if source.kind == "threads":
-        return ThreadsConnector()
-    raise ValueError(f"unsupported source kind: {source.kind}")
+    max_concurrency: int = 0
 
 
 def upsert(
     connection: sqlite3.Connection, source_id: int, item: RawItem, chunks: Chunks | None = None
-) -> bool:
+) -> tuple[bool, int]:
     cfg = chunks or Chunks()
     version = CHUNKER_VERSION + ":" + item.kind_hint + ":" + cfg.model_dump_json()
     digest = content_hash(item.text, version)
     existing = connection.execute(
-        "SELECT id,content_hash,tombstoned FROM records WHERE source_id=? AND ext_id=?",
+        "SELECT id,content_hash,tombstoned,derived_state FROM records "
+        "WHERE source_id=? AND ext_id=?",
         (source_id, item.ext_id),
     ).fetchone()
     if existing and existing[1] == digest and not existing[2]:
-        return False
+        return False, int(existing[0])
     is_code = item.kind_hint in CODE_KINDS
     outline = code.outline(item.text, item.kind_hint) if is_code else ""
     children = (
@@ -133,7 +127,7 @@ def upsert(
                     now,
                 ),
             )
-    return True
+    return True, int(parent_id)
 
 
 def _bind_embed_log(embedder: Embedder | None, connection: sqlite3.Connection) -> None:
@@ -157,137 +151,90 @@ def _bind_embed_log(embedder: Embedder | None, connection: sqlite3.Connection) -
     embedder.log = log
 
 
-def ingest_thread(
+def _needs_derived(connection: sqlite3.Connection, parent_id: int) -> bool:
+    row = connection.execute(
+        "SELECT derived_state FROM records WHERE id=?", (parent_id,)
+    ).fetchone()
+    return row is None or str(row[0]) != "ok"
+
+
+def _finish_derived(
     connection: sqlite3.Connection,
-    source_id: int,
-    item: RawItem,
+    parent_ids: list[int],
     config: Config,
     chat: Chat | None,
     stats: CardStats,
     *,
     refresh_cards: bool,
-    embedder: Embedder | None = None,
-) -> bool:
-    version = THREAD_VERSION + ":thread"
-    digest = content_hash(item.text, version)
-    existing = connection.execute(
-        "SELECT id,content_hash,tombstoned FROM records WHERE source_id=? AND ext_id=?",
-        (source_id, item.ext_id),
-    ).fetchone()
-    if existing and existing[1] == digest and not existing[2]:
-        with connection:
-            apply_cards(connection, int(existing[0]), config, chat, stats, refresh=refresh_cards)
+    embedder: Embedder | None,
+) -> int:
+    jobs: list[CardWork] = []
+    with connection:
+        for parent_id in parent_ids:
+            jobs.extend(
+                pending_card_work(connection, parent_id, config, chat, stats, refresh=refresh_cards)
+            )
+    limit = config.llm.max_concurrency if config.llm is not None else 4
+
+    def generate(work: CardWork) -> tuple[CardWork, Card, str]:
+        card, used = generate_card(
+            work.title, work.text, work.kind, config, chat, None, messages=work.messages
+        )
+        return work, card, used
+
+    produced, gate = (
+        map_bounded(limit, generate, jobs)
+        if jobs and chat is not None
+        else (
+            [
+                (
+                    work,
+                    *generate_card(
+                        work.title,
+                        work.text,
+                        work.kind,
+                        config,
+                        chat,
+                        connection,
+                        messages=work.messages,
+                    ),
+                )
+                for work in jobs
+            ],
+            None,
+        )
+    )
+    pending = [
+        parent_id
+        for parent_id in parent_ids
+        if refresh_cards or _needs_derived(connection, parent_id)
+    ]
+    if not jobs and not pending:
+        return 0
+    with connection:
+        flush_cost_log(connection, stats)
+        for work, card, used in produced:
+            commit_generated_card(connection, work, card, used, config, stats)
+        targets = pending or parent_ids
+        for parent_id in targets:
+            contextualize_children(connection, parent_id, config, chat)
+            title_row = connection.execute(
+                "SELECT title FROM records WHERE id=?", (parent_id,)
+            ).fetchone()
+            refresh_burst_prefixes(connection, parent_id, str(title_row[0]) if title_row else "")
             apply_embeddings(
                 connection,
                 embedder,
                 config.embed.source,
-                parent_id=int(existing[0]),
+                parent_id=parent_id,
                 batch_size=config.embed.batch_size,
             )
-        return False
-    messages = item.messages or ()
-    authors = list(dict.fromkeys(message.author for message in messages))
-    now = datetime.now(UTC).isoformat()
-    updated = item.updated_at.isoformat()
-    with connection:
-        connection.execute(
-            "INSERT INTO records(source_id,ext_id,kind,title,text,author,authors_json,"
-            "metadata_json,content_hash,created_at,updated_at,indexed_at) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?) "
-            "ON CONFLICT(source_id,ext_id) DO UPDATE SET kind=excluded.kind,"
-            "title=excluded.title,text=excluded.text,author=excluded.author,"
-            "authors_json=excluded.authors_json,metadata_json=excluded.metadata_json,"
-            "content_hash=excluded.content_hash,updated_at=excluded.updated_at,"
-            "indexed_at=excluded.indexed_at,derived_state='pending',tombstoned=0,"
-            "card_json=NULL,card_method=NULL,norm_text='',context_prefix=''",
-            (
-                source_id,
-                item.ext_id,
-                "thread",
-                item.title,
-                item.text,
-                authors[0] if authors else None,
-                json.dumps(authors),
-                json.dumps(item.metadata),
-                digest,
-                updated,
-                updated,
-                now,
-            ),
-        )
-        parent_id = int(
             connection.execute(
-                "SELECT id FROM records WHERE source_id=? AND ext_id=?", (source_id, item.ext_id)
-            ).fetchone()[0]
-        )
-        connection.execute("DELETE FROM embeddings WHERE record_id=?", (parent_id,))
-        connection.execute("DELETE FROM records WHERE parent_id=?", (parent_id,))
-        apply_cards(connection, parent_id, config, chat, stats, refresh=refresh_cards)
-        _write_bursts(connection, source_id, parent_id, item, config, version, updated, now)
-        apply_embeddings(
-            connection,
-            embedder,
-            config.embed.source,
-            parent_id=parent_id,
-            batch_size=config.embed.batch_size,
-        )
-    return True
-
-
-def _write_bursts(
-    connection: sqlite3.Connection,
-    source_id: int,
-    parent_id: int,
-    item: RawItem,
-    config: Config,
-    version: str,
-    updated: str,
-    now: str,
-) -> None:
-    prefix = _burst_prefix(connection, parent_id, item.title)
-    kept = qualifying_bursts(
-        item.messages or (), config.bursts, lambda term: term_idf(connection, term)
-    )
-    for seq, burst in enumerate(kept):
-        metadata = {
-            **item.metadata,
-            "message_ids": json.dumps([message.id for message in burst.messages]),
-            "reactions": burst.reactions,
-        }
-        connection.execute(
-            "INSERT INTO records(source_id,ext_id,parent_id,kind,seq,title,text,context_prefix,"
-            "author,authors_json,metadata_json,content_hash,created_at,updated_at,indexed_at) "
-            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (
-                source_id,
-                f"{item.ext_id}#burst:{burst.group}",
-                parent_id,
-                "burst",
-                seq,
-                item.title,
-                burst.text,
-                prefix,
-                burst.author,
-                json.dumps([burst.author]),
-                json.dumps(metadata),
-                content_hash(burst.text, version),
-                updated,
-                updated,
-                now,
-            ),
-        )
-
-
-def _burst_prefix(connection: sqlite3.Connection, parent_id: int, title: str) -> str:
-    row = connection.execute("SELECT card_json FROM records WHERE id=?", (parent_id,)).fetchone()
-    if row and row[0]:
-        try:
-            question = json.loads(row[0]).get("question")
-        except json.JSONDecodeError:
-            question = None
-        if isinstance(question, str) and question.strip():
-            return question.strip()
-    return title
+                "UPDATE records SET derived_state='ok' WHERE id=? AND derived_state='pending'",
+                (parent_id,),
+            )
+        flush_cost_log(connection, stats)
+    return gate.max_seen if gate is not None else (1 if jobs else 0)
 
 
 def remove_missing(
@@ -339,75 +286,91 @@ def sync(
     _bind_embed_log(embedder, connection)
     with connection:
         requeue_embeddings(connection, config.embed.source)
-    for source in selected:
-        connector = connector_for(source)
-        items = connector.discover(source)
-        first = next(items, None)
+    with timed("sync"):
+        for source in selected:
+            _sync_source(
+                connection,
+                config,
+                source,
+                chat=chat,
+                refresh_cards=refresh_cards,
+                embedder=embedder,
+                stats=stats,
+                prune=prune,
+                report=report,
+            )
         with connection:
-            source_id = register(connection, source)
-        changed = False
-        seen: set[str] = set()
-        for item in chain([first] if first is not None else [], items):
-            seen.add(item.ext_id)
-            if source.kind == "threads":
-                wrote = ingest_thread(
-                    connection,
-                    source_id,
-                    item,
-                    config,
-                    chat,
-                    stats,
-                    refresh_cards=refresh_cards,
-                    embedder=embedder,
-                )
-            else:
-                wrote = upsert(connection, source_id, item, config.chunks)
-                parent = connection.execute(
-                    "SELECT id FROM records WHERE source_id=? AND ext_id=?",
-                    (source_id, item.ext_id),
-                ).fetchone()
-                if parent is not None:
-                    with connection:
-                        apply_cards(
-                            connection, int(parent[0]), config, chat, stats, refresh=refresh_cards
-                        )
-                        contextualize_children(connection, int(parent[0]), config, chat)
-                        apply_embeddings(
-                            connection,
-                            embedder,
-                            config.embed.source,
-                            parent_id=int(parent[0]),
-                            batch_size=config.embed.batch_size,
-                        )
-            if wrote:
-                report.processed += 1
-                changed = True
-            else:
-                report.unchanged += 1
-        report.skipped += len(connector.skipped)
-        before = report.tombstoned + report.pruned
-        remove_missing(
-            connection,
-            source_id,
-            seen,
-            [skip.path for skip in connector.skipped if not skip.path.startswith("line ")],
-            prune=prune,
-            report=report,
-        )
-        if changed or before != report.tombstoned + report.pruned:
-            with connection:
-                connection.execute(
-                    "UPDATE sources SET last_synced_at=? WHERE id=?",
-                    (datetime.now(UTC).isoformat(), source_id),
-                )
-    with connection:
-        apply_embeddings(
-            connection, embedder, config.embed.source, batch_size=config.embed.batch_size
-        )
-        reconcile(connection, config)
+            flush_cost_log(connection, stats)
+            apply_embeddings(
+                connection, embedder, config.embed.source, batch_size=config.embed.batch_size
+            )
+            reconcile(connection, config)
     report.llm_calls = stats.llm_calls
     report.cache_hits = stats.cache_hits
     report.cache_misses = stats.cache_misses
     report.cards_llm = stats.cards_llm
     report.cards_heuristic = stats.cards_heuristic
     return report
+
+
+def _sync_source(
+    connection: sqlite3.Connection,
+    config: Config,
+    source: Source,
+    *,
+    chat: Chat | None,
+    refresh_cards: bool,
+    embedder: Embedder | None,
+    stats: CardStats,
+    prune: bool,
+    report: SyncReport,
+) -> None:
+    connector = connector_for(source)
+    items = connector.discover(source)
+    first = next(items, None)
+    with connection:
+        source_id = register(connection, source)
+    changed = False
+    seen: set[str] = set()
+    derived: list[int] = []
+    for item in chain([first] if first is not None else [], items):
+        seen.add(item.ext_id)
+        if source.kind == "threads":
+            wrote, parent_id = ingest_thread_lexical(connection, source_id, item, config)
+        else:
+            wrote, parent_id = upsert(connection, source_id, item, config.chunks)
+        maybe_crash()
+        derived.append(parent_id)
+        if wrote:
+            report.processed += 1
+            changed = True
+        else:
+            report.unchanged += 1
+    skipped = getattr(connector, "skipped", [])
+    report.skipped += len(skipped)
+    if derived:
+        seen_max = _finish_derived(
+            connection,
+            derived,
+            config,
+            chat,
+            stats,
+            refresh_cards=refresh_cards,
+            embedder=embedder,
+        )
+        report.max_concurrency = max(report.max_concurrency, seen_max)
+    before = report.tombstoned + report.pruned
+    remove_missing(
+        connection,
+        source_id,
+        seen,
+        [skip.path for skip in skipped if not skip.path.startswith("line ")],
+        prune=prune,
+        report=report,
+    )
+    if changed or before != report.tombstoned + report.pruned:
+        with connection:
+            connection.execute(
+                "UPDATE sources SET last_synced_at=? WHERE id=?",
+                (datetime.now(UTC).isoformat(), source_id),
+            )

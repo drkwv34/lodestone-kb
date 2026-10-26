@@ -9,7 +9,6 @@ from lodestone.config import DEFAULT_TOML, Config, Prices, Source, load_config
 from lodestone.config_io import registry_text, replace_config
 from lodestone.experts import Expert, packets_for, recent, who_knows
 from lodestone.fusion.pipeline import fused_search
-from lodestone.ingest.embeddings import reindex_vectors
 from lodestone.ingest.pipeline import SyncReport, sync
 from lodestone.lanes.fts import Hit, LaneName, search
 from lodestone.lanes.grep import GrepError
@@ -422,48 +421,6 @@ def stats_workspace(config: Config) -> dict[str, object]:
         "query_log": queries,
         "store_queries": config.log.store_queries,
     }
-
-
-def reindex_workspace(config: Config, *, lanes: list[str], offline: bool = False) -> dict[str, int]:
-    unknown = [lane for lane in lanes if lane != "vec"]
-    if unknown:
-        raise ValueError("only --lanes vec is supported")
-    guarded = offline or config.offline
-    connection = open_database(config.workspace.db_path)
-    try:
-        with offline_scope(guarded):
-            embedder = make_embedder(config, offline=guarded)
-            try:
-                if embedder is None:
-                    raise ValueError(
-                        "embeddings are disabled; set embed.provider or pass --offline"
-                    )
-                before = int(connection.execute("SELECT count(*) FROM embeddings").fetchone()[0])
-                with connection:
-                    written = reindex_vectors(
-                        connection,
-                        embedder,
-                        config.embed.source,
-                        batch_size=config.embed.batch_size,
-                    )
-                after = int(connection.execute("SELECT count(*) FROM embeddings").fetchone()[0])
-                records = int(
-                    connection.execute(
-                        "SELECT count(*) FROM records WHERE tombstoned=0"
-                    ).fetchone()[0]
-                )
-                return {
-                    "before": before,
-                    "after": after,
-                    "written": written,
-                    "records": records,
-                }
-            finally:
-                closer = getattr(embedder, "close", None)
-                if callable(closer):
-                    closer()
-    finally:
-        connection.close()
 
 
 def source_list(config: Config, project: str | None = None) -> list[dict[str, object]]:

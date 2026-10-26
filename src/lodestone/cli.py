@@ -5,11 +5,10 @@ from __future__ import annotations
 
 import json
 import os
-import platform
 import sqlite3
 from dataclasses import asdict
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated
 
 import typer
 
@@ -23,17 +22,19 @@ from lodestone.cli_support import (
     mcp_command,
 )
 from lodestone.config import ConfigError, Source, redact
+from lodestone.ingest.reindex import reindex_workspace
 from lodestone.lanes.fts import LaneName
 from lodestone.lanes.scope import parse_metadata
+from lodestone.observe import configure_logging
+from lodestone.ops import run_doctor
 from lodestone.providers import OfflineError, ProviderError
-from lodestone.storage.db import SCHEMA_VERSION, StorageError, inspect_database, probe_fts5
+from lodestone.storage.db import SCHEMA_VERSION, StorageError
 from lodestone.workspace import (
     cost_workspace,
     get_workspace,
     grep_workspace,
     initialise,
     recent_workspace,
-    reindex_workspace,
     search_result,
     source_list,
     stats_workspace,
@@ -41,6 +42,8 @@ from lodestone.workspace import (
     update_source,
     who_knows_workspace,
 )
+
+configure_logging()
 
 app = typer.Typer(no_args_is_help=True, help="Lodestone local knowledge workspace.")
 config_app = typer.Typer(no_args_is_help=True)
@@ -77,31 +80,20 @@ def config_show(config: ConfigOption = Path("lodestone.toml")) -> None:
 
 
 @app.command()
-def doctor(config: ConfigOption = Path("lodestone.toml")) -> None:
-    """Probe Python, SQLite, FTS5, and database schema (subset of FR-080)."""
+def doctor(
+    config: ConfigOption = Path("lodestone.toml"),
+    deep: Annotated[bool, typer.Option("--deep")] = False,
+    offline: Annotated[bool, typer.Option("--offline")] = False,
+) -> None:
+    """Probe runtime, schema, sqlite-vec, providers, and optional consistency."""
     cfg = configuration(config)
-    errors: list[str] = []
-    typer.echo(f"Python: {platform.python_version()}")
-    typer.echo(f"SQLite: {sqlite3.sqlite_version}")
-    if sqlite3.sqlite_version_info < (3, 38, 0):
-        errors.append("SQLite >= 3.38 required")
-    try:
-        probe_fts5()
-        typer.echo("FTS5: available (identifier tokenizer probe passed)")
-    except StorageError as exc:
-        errors.append(str(exc))
-    try:
-        version = inspect_database(cfg.workspace.db_path)
-        typer.echo(f"Database schema: {version} (supported: {SCHEMA_VERSION})")
-        if version != SCHEMA_VERSION:
-            errors.append("Database requires migration; run lodestone init")
-    except (sqlite3.Error, StorageError) as exc:
-        errors.append(f"Database: {exc}; run lodestone init or upgrade Lodestone")
-    for error in errors:
+    report = run_doctor(cfg, deep=deep, offline=offline)
+    for line in report.lines:
+        typer.echo(line)
+    for error in report.errors:
         typer.echo(f"ERROR: {error}", err=True)
-    if errors:
+    if report.errors:
         raise typer.Exit(1)
-    typer.echo("Doctor: OK (local schema probes)")
 
 
 @app.command()
@@ -363,7 +355,7 @@ def stats(config: ConfigOption = Path("lodestone.toml")) -> None:
 def source_add(
     name: Annotated[str, typer.Argument()],
     path: Annotated[Path, typer.Option("--path")],
-    kind: Annotated[Literal["files", "threads"], typer.Option()] = "files",
+    kind: Annotated[str, typer.Option()] = "files",
     include: Annotated[list[str] | None, typer.Option()] = None,
     exclude: Annotated[list[str] | None, typer.Option()] = None,
     max_file_bytes: Annotated[int, typer.Option(min=1)] = 1024 * 1024,

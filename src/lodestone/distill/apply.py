@@ -6,7 +6,8 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from lodestone.config import Config
@@ -26,6 +27,19 @@ class CardStats:
     cache_misses: int = 0
     cards_llm: int = 0
     cards_heuristic: int = 0
+    pending_calls: list[tuple[str, ChatResult]] = field(default_factory=list)
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+
+
+@dataclass(frozen=True)
+class CardWork:
+    record_id: int
+    title: str
+    text: str
+    kind: str
+    digest: str
+    messages: list[tuple[str, str]] | None
+    key: str
 
 
 def cache_key(content_hash: str, prompt_version: str, model: str) -> str:
@@ -34,9 +48,23 @@ def cache_key(content_hash: str, prompt_version: str, model: str) -> str:
 
 
 def bind_log(chat: Chat, connection: sqlite3.Connection, stats: CardStats) -> None:
+    del connection
     previous = chat.log
 
     def log(op: str, result: ChatResult) -> None:
+        with stats._lock:
+            stats.pending_calls.append((op, result))
+        if previous is not None:
+            previous(op, result)
+
+    chat.log = log
+
+
+def flush_cost_log(connection: sqlite3.Connection, stats: CardStats) -> None:
+    with stats._lock:
+        pending = list(stats.pending_calls)
+        stats.pending_calls.clear()
+    for op, result in pending:
         log_call(
             connection,
             op=op,
@@ -47,13 +75,9 @@ def bind_log(chat: Chat, connection: sqlite3.Connection, stats: CardStats) -> No
             ok=result.ok,
         )
         stats.llm_calls += 1
-        if previous is not None:
-            previous(op, result)
-
-    chat.log = log
 
 
-def apply_cards(
+def pending_card_work(
     connection: sqlite3.Connection,
     parent_id: int,
     config: Config,
@@ -61,11 +85,12 @@ def apply_cards(
     stats: CardStats,
     *,
     refresh: bool = False,
-) -> None:
+) -> list[CardWork]:
     if not config.cards.enabled:
-        return
+        return []
     model = chat.model if chat is not None else "heuristic"
     kinds = set(config.cards.kinds)
+    jobs: list[CardWork] = []
     rows = connection.execute(
         "SELECT id,kind,title,text,content_hash,card_json,card_method,norm_text,metadata_json "
         "FROM records WHERE (id=? OR parent_id=?) AND tombstoned=0",
@@ -89,28 +114,63 @@ def apply_cards(
                 _write(connection, int(record_id), cached[0], str(cached[1]), rendered)
                 continue
         stats.cache_misses += 1
-        card, used = _generate(
-            str(title),
-            str(text),
-            str(kind),
+        jobs.append(
+            CardWork(
+                record_id=int(record_id),
+                title=str(title),
+                text=str(text),
+                kind=str(kind),
+                digest=str(digest),
+                messages=_thread_messages(str(kind), str(metadata_json or "")),
+                key=key,
+            )
+        )
+    return jobs
+
+
+def commit_generated_card(
+    connection: sqlite3.Connection,
+    work: CardWork,
+    card: Card,
+    used: str,
+    config: Config,
+    stats: CardStats,
+) -> None:
+    payload = card.model_dump_json()
+    rendered = render_norm(card, config.cards.norm_format)
+    _write(connection, work.record_id, payload, used, rendered)
+    connection.execute(
+        "INSERT INTO card_cache(key,card_json,method,created_at) VALUES(?,?,?,?) "
+        "ON CONFLICT(key) DO UPDATE SET card_json=excluded.card_json,"
+        "method=excluded.method,created_at=excluded.created_at",
+        (work.key, payload, used, datetime.now(UTC).isoformat()),
+    )
+    if used == "llm":
+        stats.cards_llm += 1
+    else:
+        stats.cards_heuristic += 1
+
+
+def apply_cards(
+    connection: sqlite3.Connection,
+    parent_id: int,
+    config: Config,
+    chat: Chat | None,
+    stats: CardStats,
+    *,
+    refresh: bool = False,
+) -> None:
+    for work in pending_card_work(connection, parent_id, config, chat, stats, refresh=refresh):
+        card, used = generate_card(
+            work.title,
+            work.text,
+            work.kind,
             config,
             chat,
             connection,
-            messages=_thread_messages(str(kind), str(metadata_json or "")),
+            messages=work.messages,
         )
-        payload = card.model_dump_json()
-        rendered = render_norm(card, config.cards.norm_format)
-        _write(connection, int(record_id), payload, used, rendered)
-        connection.execute(
-            "INSERT INTO card_cache(key,card_json,method,created_at) VALUES(?,?,?,?) "
-            "ON CONFLICT(key) DO UPDATE SET card_json=excluded.card_json,"
-            "method=excluded.method,created_at=excluded.created_at",
-            (key, payload, used, datetime.now(UTC).isoformat()),
-        )
-        if used == "llm":
-            stats.cards_llm += 1
-        else:
-            stats.cards_heuristic += 1
+        commit_generated_card(connection, work, card, used, config, stats)
 
 
 def contextualize_children(
@@ -168,13 +228,13 @@ def _thread_messages(kind: str, metadata_json: str) -> list[tuple[str, str]] | N
     ]
 
 
-def _generate(
+def generate_card(
     title: str,
     text: str,
     kind: str,
     config: Config,
     chat: Chat | None,
-    connection: sqlite3.Connection,
+    connection: sqlite3.Connection | None,
     messages: list[tuple[str, str]] | None = None,
 ) -> tuple[Card, str]:
     if chat is None:
