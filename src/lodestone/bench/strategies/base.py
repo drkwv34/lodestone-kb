@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Strategy protocol, index stats, and skipped stubs."""
+"""Strategy protocol, index stats, and catalog of built-in names."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class Strategy(Protocol):
 
 
 class SkippedStrategy:
-    """Placeholder for strategies that are not in this change."""
+    """Placeholder for strategies that are not implemented."""
 
     name: str
     skipped: str | None
@@ -47,12 +47,15 @@ class SkippedStrategy:
         return None
 
 
-SKIPPED_REASONS = {
-    "lodestone-hybrid": "not implemented in this change",
-    "lodestone-rerank": "not implemented in this change",
-    "agentic-ask": "not implemented in this change",
-    "grep-agent": "not implemented in this change",
-    "full-context": "not implemented in this change",
-}
+SKIPPED_REASONS: dict[str, str] = {}
 IN_SCOPE = ("classic-rag", "bm25-chunks", "hybrid-chunks", "lodestone-lexical")
-ALL_STRATEGIES = IN_SCOPE + tuple(SKIPPED_REASONS)
+IMPLEMENTED = (
+    *IN_SCOPE,
+    "lodestone-hybrid",
+    "lodestone-rerank",
+    "agentic-ask",
+    "grep-agent",
+    "full-context",
+)
+ALL_STRATEGIES = IMPLEMENTED
+DEFAULT_CONTEXT_BUDGET = 128_000

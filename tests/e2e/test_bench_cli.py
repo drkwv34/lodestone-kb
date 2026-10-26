@@ -12,7 +12,7 @@ runner = CliRunner(env={"NO_COLOR": "1", "FORCE_COLOR": "0", "TERM": "dumb"})
 
 
 def test_fr_051_bench_commands(tmp_path: Path) -> None:
-    for name in ("synth", "run", "report"):
+    for name in ("synth", "run", "report", "generate", "advise"):
         result = runner.invoke(app, ["bench", name, "--help"], color=False)
         assert result.exit_code == 0, result.output
     synth = runner.invoke(
@@ -44,6 +44,9 @@ def test_fr_051_bench_commands(tmp_path: Path) -> None:
     payload = json.loads((out / "report.json").read_text(encoding="utf-8"))
     assert payload["schema"] == "report.v1"
     assert payload["embedder"] == "hash"
+    advised = runner.invoke(app, ["bench", "advise", str(out)])
+    assert advised.exit_code == 0, advised.output
+    assert "verdict:" in advised.output
     unknown = runner.invoke(
         app,
         [

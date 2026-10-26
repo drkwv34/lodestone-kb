@@ -4,7 +4,7 @@ from pathlib import Path
 from lodestone.bench.evalset import load_evalset
 from lodestone.bench.report import HASH_CAVEAT, write_report
 from lodestone.bench.runner import run_bench
-from lodestone.bench.strategies import IN_SCOPE, SKIPPED_REASONS
+from lodestone.bench.strategies import ALL_STRATEGIES, IN_SCOPE
 from lodestone.bench.synth import generate
 
 
@@ -40,17 +40,45 @@ def test_fr_073_skipped_strategies_reported(tmp_path: Path) -> None:
         corpus=corpus.directory,
         evalset=corpus.evalset,
         out=tmp_path / "run",
-        strategies="all",
+        strategies="bm25-chunks,full-context",
         k=5,
+        context_budget=1,
         generated_at="2026-01-02T00:00:00+00:00",
     )
+    names = [item.name for item in run.strategies]
+    assert names == ["bm25-chunks", "full-context"]
     skipped = {item.name: item for item in run.strategies if item.status == "skipped"}
-    assert set(skipped) == set(SKIPPED_REASONS)
-    for name, reason in SKIPPED_REASONS.items():
-        assert skipped[name].skipped_reason == reason
+    assert "full-context" in skipped
+    assert skipped["full-context"].skipped_reason == "too_large"
     markdown_path, _json_path = write_report(tmp_path / "run")
     markdown = markdown_path.read_text(encoding="utf-8")
     assert HASH_CAVEAT in markdown
-    for name in SKIPPED_REASONS:
-        assert name in markdown
-        assert "skipped" in markdown
+    assert "full-context" in markdown
+    assert "too_large" in markdown
+    assert "bm25-chunks" in markdown
+
+
+def test_fr_073_remaining_strategies_run_offline(tmp_path: Path) -> None:
+    corpus = generate(tmp_path / "corpus", seed=8, threads=6)
+    run = run_bench(
+        corpus=corpus.directory,
+        evalset=corpus.evalset,
+        out=tmp_path / "run",
+        strategies="lodestone-hybrid,lodestone-rerank,agentic-ask,grep-agent,full-context",
+        k=5,
+        context_budget=1_000_000,
+        generated_at="2026-01-02T00:00:00+00:00",
+    )
+    names = {item.name: item for item in run.strategies}
+    remaining = (
+        "lodestone-hybrid",
+        "lodestone-rerank",
+        "agentic-ask",
+        "grep-agent",
+        "full-context",
+    )
+    for name in remaining:
+        item = names[name]
+        assert item.status == "ok", item.failures
+        assert item.questions
+    assert set(ALL_STRATEGIES) >= set(remaining)

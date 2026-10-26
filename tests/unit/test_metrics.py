@@ -6,15 +6,18 @@ import pytest
 from lodestone.bench.metrics import (
     collapse_parents,
     cost_usd,
+    judge_score,
     latency_summary,
     mean,
     mrr,
+    must_contain_score,
     ndcg_at,
     percentile,
     recall_at,
     retrieval_scores,
 )
 from lodestone.config import Prices
+from lodestone.providers.fake import FakeLLM
 
 
 def test_fr_074_metric_goldens() -> None:
@@ -64,3 +67,19 @@ def test_fr_074_parent_collapse() -> None:
     assert scores["recall@1"] == 1.0
     assert scores["mrr"] == 1.0
     assert collapse_parents(["a", "a", "b"]) == ["a", "b"]
+
+
+def test_fr_074_must_contain_correctness() -> None:
+    assert must_contain_score("Set prefetch to four on NFS.", ["prefetch to four"]) == 1.0
+    assert must_contain_score("wrong", ["prefetch to four"]) == 0.0
+    assert must_contain_score("one two", ["one", "missing"]) == 0.5
+    assert must_contain_score("anything", None) == 1.0
+    assert must_contain_score("anything", []) == 1.0
+
+
+def test_fr_074_optional_judge() -> None:
+    chat = FakeLLM(script=['{"score": 0.75}'])
+    score = judge_score("Set prefetch to four.", ["prefetch to four"], chat)
+    assert score == 0.75
+    fallback = FakeLLM(script=["not-json"])
+    assert judge_score("Set prefetch to four.", ["prefetch to four"], fallback) == 1.0
