@@ -260,8 +260,32 @@ $ openspec list
 No active changes found.
 ```
 
-Main CI (archive commit, including macOS) will be pasted after the push job
-completes.
+## Main CI (archive commit)
+
+Archive SHA: `94e15006f43d5ac6fa91fba4e1bc88795260181e`
+CI run URL: https://github.com/drkwv34/lodestone-kb/actions/runs/40353982782
+conclusion: success (including macOS)
+
+```text
+$ gh run view 40353982782 --json conclusion,headSha,url,status,event,displayTitle
+{"conclusion":"success","displayTitle":"docs: archive bench agentic strategies, stats, and advise OpenSpec ch…","event":"push","headSha":"94e15006f43d5ac6fa91fba4e1bc88795260181e","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40353982782"}
+
+$ gh run view 40353982782
+
+✓ main ci · 40353982782
+Triggered via push about 8 minutes ago
+
+JOBS
+✓ openspec in 14s (ID 121681366185)
+✓ build in 31s (ID 121681366765)
+✓ lint-type in 34s (ID 121681366837)
+✓ licenses in 26s (ID 121681367003)
+✓ test (macos-latest, 3.12) in 2m15s (ID 121681733924)
+✓ test (ubuntu-latest, 3.13) in 1m20s (ID 121681733933)
+✓ test (windows-latest, 3.12, true) in 2m37s (ID 121681734013)
+✓ test (ubuntu-latest, 3.11) in 1m19s (ID 121681734022)
+✓ test (ubuntu-latest, 3.12) in 1m5s (ID 121681734106)
+```
 
 ## Authorship (feature range)
 
