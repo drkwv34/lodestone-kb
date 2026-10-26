@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lodestone.local/schemas/report.v1.json",
+  "title": "report.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "generated_at",
+    "config_hash",
+    "corpus_hash",
+    "versions",
+    "strategies",
+    "categories",
+    "cost_latency",
+    "leakage",
+    "caveats",
+    "failures"
+  ],
+  "properties": {
+    "schema": { "const": "report.v1" },
+    "generated_at": { "type": "string" },
+    "config_hash": { "type": "string" },
+    "corpus_hash": { "type": "string" },
+    "versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "embedder": { "type": "string" },
+    "strategies": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "cost_latency": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "leakage": { "type": "object" },
+    "caveats": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "failures": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

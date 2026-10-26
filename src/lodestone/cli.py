@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 
 import typer
 
+from lodestone.bench.cli import bench_app
 from lodestone.cli_support import (
     Caught,
     ConfigOption,
@@ -48,6 +49,7 @@ source_app = typer.Typer(no_args_is_help=True)
 app.add_typer(source_app, name="source")
 app.command("mcp")(mcp_command)
 app.command("ask")(ask_command)
+app.add_typer(bench_app, name="bench")
 
 
 @app.command()
