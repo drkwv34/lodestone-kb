@@ -172,6 +172,8 @@ JOBS
 
 ```text
 $ git log ab012da..HEAD --format='%h %an <%ae> | %cn <%ce>'
+d6b0480 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+94f9e0d Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 4f55d69 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 b5ddd5c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 2cc17bb Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
@@ -226,8 +228,39 @@ No active changes found.
 The archive commit `94f9e0d` copied the change into
 `openspec/changes/archive/2026-10-27-add-docs-packaging/` but left
 `openspec/changes/add-docs-packaging/` in place, so `openspec list` still
-showed an active change. That leftover directory was removed on main; archive
-and `openspec/specs/docs-packaging/spec.md` are unchanged.
+showed an active change. That leftover directory was removed on main at
+`d6b0480c10c2ba335429db24015c0c5e78d094b7`; archive and
+`openspec/specs/docs-packaging/spec.md` are unchanged.
 
-Main push CI on the archive commit (including macOS) will be pasted after that
-run completes.
+Main push CI on the archive commit `94f9e0d`, including macOS:
+https://github.com/drkwv34/lodestone-kb/actions/runs/40541727620
+
+```text
+$ gh run view 40541727620 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"94f9e0ddfde832de43958dc64169bb587adbbe5a","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40541727620"}
+```
+
+Main push CI on leftover-removal `d6b0480` (complete archive tree), including
+macOS:
+https://github.com/drkwv34/lodestone-kb/actions/runs/40541922627
+
+```text
+$ gh run view 40541922627 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"d6b0480c10c2ba335429db24015c0c5e78d094b7","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40541922627"}
+
+$ gh run view 40541922627
+
+✓ main ci · 40541922627
+Triggered via push
+
+JOBS
+✓ openspec in 11s (ID 122322272645)
+✓ lint-type in 32s (ID 122322273119)
+✓ licenses in 26s (ID 122322273247)
+✓ build in 38s (ID 122322273256)
+✓ test (ubuntu-latest, 3.12) in 1m21s (ID 122322610680)
+✓ test (windows-latest, 3.12, true) in 1m21s (ID 122322610697)
+✓ test (ubuntu-latest, 3.13) in 1m32s (ID 122322610743)
+✓ test (macos-latest, 3.12) in 2m9s (ID 122322610774)
+✓ test (ubuntu-latest, 3.11) in 1m34s (ID 122322610829)
+```
