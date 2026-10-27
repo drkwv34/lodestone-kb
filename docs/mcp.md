@@ -12,7 +12,8 @@ lodestone mcp --config lodestone.toml --offline
 ```
 
 `--offline` replaces remote providers and is the safe default in CI and
-untrusted-host setups.
+untrusted-host setups. The server does not ingest or mutate records; use
+`lodestone sync` from the CLI for writes.
 
 ## Claude Code
 
@@ -45,6 +46,5 @@ Cursor MCP config (`.cursor/mcp.json` or the MCP settings UI):
 }
 ```
 
-Point `--config` at the workspace that already has a synced index. The server
-does not ingest or mutate records; use `lodestone sync` from the CLI for
-writes.
+Point `--config` at a workspace that already has a synced index. More
+context: [concepts.md](concepts.md), [privacy.md](privacy.md).
