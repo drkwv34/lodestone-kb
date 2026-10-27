@@ -83,5 +83,7 @@ jobs:
       - run: python -m build
       - run: test -f dist/*.whl && test -f dist/*.tar.gz
       - run: python -m venv "$RUNNER_TEMP/lodestone-wheel"
-      - run: "$RUNNER_TEMP/lodestone-wheel/bin/pip" install dist/*.whl
-      - run: "$RUNNER_TEMP/lodestone-wheel/bin/python" scripts/smoke_wheel.py
+      - run: |
+          "$RUNNER_TEMP/lodestone-wheel/bin/pip" install dist/*.whl
+      - run: |
+          "$RUNNER_TEMP/lodestone-wheel/bin/python" scripts/smoke_wheel.py

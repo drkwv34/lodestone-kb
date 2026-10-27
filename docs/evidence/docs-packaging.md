@@ -131,6 +131,15 @@ INFO op complete
 Wheel smoke: init, doctor, config, sync, fused search passed
 ```
 
+## CI YAML fix
+
+Push CI on `2cc17bb` failed with zero jobs (invalid workflow YAML around
+`.github/workflows/ci.yml` L85): `run:` values that started with
+`"$RUNNER_TEMP/..."` were parsed as quoted scalars. The clean-venv
+`pip install dist/*.whl` steps are unchanged; they are now YAML block
+scalars. Failed run:
+https://github.com/drkwv34/lodestone-kb/actions/runs/40539871520
+
 ## CI (PR head)
 
 PR and PR-head CI URLs will be pasted after GitHub Actions completes, including
