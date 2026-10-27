@@ -142,11 +142,86 @@ https://github.com/drkwv34/lodestone-kb/actions/runs/40539871520
 
 ## CI (PR head)
 
-PR and PR-head CI URLs will be pasted after GitHub Actions completes, including
-macOS.
+PR: https://github.com/drkwv34/lodestone-kb/pull/16
+PR head SHA: `b5ddd5c1b6247a849fbfe2987560634cb670ebea`
+CI run URL: https://github.com/drkwv34/lodestone-kb/actions/runs/40540708667
+conclusion: success (including macOS)
+
+```text
+$ gh run view 40540708667 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"b5ddd5c1b6247a849fbfe2987560634cb670ebea","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40540708667"}
+
+$ gh run view 40540708667
+
+✓ feat/docs-packaging ci drkwv34/lodestone-kb#16 · 40540708667
+Triggered via pull_request about 4 minutes ago
+
+JOBS
+✓ build in 35s (ID 122318000046)
+✓ lint-type in 36s (ID 122318000372)
+✓ openspec in 15s (ID 122318000587)
+✓ licenses in 21s (ID 122318000815)
+✓ test (ubuntu-latest, 3.11) in 1m30s (ID 122318372493)
+✓ test (macos-latest, 3.12) in 2m22s (ID 122318372509)
+✓ test (ubuntu-latest, 3.13) in 1m32s (ID 122318372565)
+✓ test (ubuntu-latest, 3.12) in 1m36s (ID 122318372642)
+✓ test (windows-latest, 3.12, true) in 1m8s (ID 122318372654)
+```
 
 ## Authorship
 
-Recorded after commits land; expected identity is Christian Agila
-<87576768+drkwv34@users.noreply.github.com> with co-authored-by / cursor[bot]
-count 0.
+```text
+$ git log ab012da..HEAD --format='%h %an <%ae> | %cn <%ce>'
+4f55d69 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+b5ddd5c Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+2cc17bb Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+9e728f5 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+b7e4bae Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+c1a8a90 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log ab012da..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
+```
+
+## Merge and archive
+
+Merge commit: `4f55d69e96bebe88409fed3e8733b06e9e3cfe77`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. Two parents
+(`ab012da` and `b5ddd5c`). No co-author trailers.
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%n%B'
+4f55d69e96bebe88409fed3e8733b06e9e3cfe77
+4f55d69 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+Merge pull request #16 from drkwv34/feat/docs-packaging
+
+docs: user guides, quickstart, and verified wheel packaging
+```
+
+OpenSpec archived as `2026-10-27-add-docs-packaging` on main. Specs synced
+(new `docs-packaging` main spec).
+
+```text
+$ openspec validate --all --strict
+✓ spec/bench-agentic-advise
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/docs-packaging
+✓ spec/fusion-search
+✓ spec/hardening
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 14 passed, 0 failed (14 items)
+
+$ openspec list
+No active changes found.
+```
+
+Main push CI on the archive commit (including macOS) will be pasted after that
+run completes.
