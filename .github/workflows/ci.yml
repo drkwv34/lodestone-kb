@@ -20,6 +20,7 @@ jobs:
       - run: mypy --strict src
       - run: lint-imports --config importlinter.ini
       - run: python scripts/check_modules.py
+      - run: python scripts/check_links.py
   test:
     needs: lint-type
     strategy:
@@ -40,6 +41,8 @@ jobs:
       - run: pip install -e '.[dev,vec]'
       - if: matrix.smoke != true
         run: pytest -q --cov=src/lodestone --cov-report=term-missing --cov-fail-under=85
+      - if: ${{ matrix.smoke != true && runner.os != 'Windows' }}
+        run: bash examples/quickstart.sh
       - if: matrix.smoke == true
         run: pytest tests/e2e -k smoke
   openspec:
@@ -78,5 +81,7 @@ jobs:
           python-version: '3.12'
       - run: pip install -e '.[dev]'
       - run: python -m build
-      - run: pip install --force-reinstall --no-deps dist/*.whl
-      - run: python scripts/smoke_wheel.py
+      - run: test -f dist/*.whl && test -f dist/*.tar.gz
+      - run: python -m venv "$RUNNER_TEMP/lodestone-wheel"
+      - run: "$RUNNER_TEMP/lodestone-wheel/bin/pip" install dist/*.whl
+      - run: "$RUNNER_TEMP/lodestone-wheel/bin/python" scripts/smoke_wheel.py
