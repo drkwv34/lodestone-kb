@@ -5,6 +5,10 @@ never stored in `lodestone.toml`. Structured logs omit secrets and raw record
 text. `--offline` / `offline = true` replaces remote providers with the hash
 embedder and heuristic cards and makes no network connections.
 
+There is no telemetry. `config show` redacts fields whose names contain
+key/token/secret. `LODESTONE_LLM_API_KEY` and `LODESTONE_EMBED_API_KEY`
+override configured environment references at runtime without entering TOML.
+
 ## Data-flow table (NFR-010)
 
 | Command | Leaves the machine | Stays local |
@@ -22,3 +26,6 @@ embedder and heuristic cards and makes no network connections.
 
 Default config does not send full corpus text. Only card prompts and rerank
 snippets go to a configured provider when those features are enabled.
+
+Keep workspace files (`.lodestone/`, `lodestone.toml` if it names private
+paths) out of version control unless you intend to share them.
