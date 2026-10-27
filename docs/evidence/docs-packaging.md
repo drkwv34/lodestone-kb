@@ -223,5 +223,11 @@ $ openspec list
 No active changes found.
 ```
 
+The archive commit `94f9e0d` copied the change into
+`openspec/changes/archive/2026-10-27-add-docs-packaging/` but left
+`openspec/changes/add-docs-packaging/` in place, so `openspec list` still
+showed an active change. That leftover directory was removed on main; archive
+and `openspec/specs/docs-packaging/spec.md` are unchanged.
+
 Main push CI on the archive commit (including macOS) will be pasted after that
 run completes.
