@@ -17,6 +17,7 @@ REQUIRED = (
     ROOT / "docs/bench.md",
     ROOT / "docs/privacy.md",
     ROOT / "docs/faq.md",
+    ROOT / "docs/RELEASE.md",
 )
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 EXTERNAL = ("http://", "https://", "mailto:", "data:")

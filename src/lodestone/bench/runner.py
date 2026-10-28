@@ -33,7 +33,7 @@ def _package_version() -> str:
     try:
         return version("lodestone-kb")
     except PackageNotFoundError:
-        return "0.1.0.dev0"
+        return "0.1.0rc1"
 
 
 @dataclass

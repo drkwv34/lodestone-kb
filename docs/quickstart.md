@@ -14,7 +14,7 @@ machine when following the offline walkthrough below (NFR-013). CI runs
 ## Install
 
 A published release will install with `pip install lodestone-kb`. This
-repository is version `0.1.0.dev0` and is not on PyPI. From a clone:
+repository is version `0.1.0rc1` and is not on PyPI. From a clone:
 
 ```sh
 python -m venv .venv

@@ -38,6 +38,24 @@ def test_fr_040_fr_034_fused_explain_and_grep_cli(tmp_path: Path) -> None:
     grep_payload = json.loads(grep.stdout)
     assert grep_payload["lane"] == "grep"
     assert grep_payload["hits"]
+
+
+def test_nfr_005_search_json_deterministic(tmp_path: Path) -> None:
+    shutil.copytree(CORPUS, tmp_path / "corpus")
+    assert command(tmp_path, "init").returncode == 0
+    config_path = tmp_path / "lodestone.toml"
+    config_path.write_text(config_path.read_text().replace("sources = []", 'sources = ["wiki"]'))
+    with config_path.open("a") as stream:
+        stream.write(
+            '\n[[sources]]\nname="wiki"\nkind="files"\npath="corpus"\nexclude=["drafts/**"]\n'
+        )
+    assert command(tmp_path, "sync", "--offline").returncode == 0
+    first = command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--json", "--offline")
+    second = command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--json", "--offline")
+    assert first.returncode == 0, first.stderr
+    assert first.stdout == second.stdout
+    payload = json.loads(first.stdout)
+    assert payload["hits"]
     rejected = command(tmp_path, "search", "(a+)+", "--lane", "grep", "--regex")
     assert rejected.returncode == 2
     assert "pathological" in rejected.stderr

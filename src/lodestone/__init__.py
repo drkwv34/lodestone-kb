@@ -13,7 +13,7 @@ from lodestone.sdk import (
     Stats,
 )
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0rc1"
 __all__ = [
     "Answer",
     "Cost",
