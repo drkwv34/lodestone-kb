@@ -87,15 +87,23 @@ documents 2
 ## Docker build
 
 Docker was not installed on the implementer machine (`command -v docker`
-printed nothing). The Ubuntu CI `docker` job runs:
+printed nothing). The Ubuntu CI `docker` job on PR head `3810a63` ran
+`docker build -t lodestone-mcp:0.1.0rc1 .` and did not push.
 
-```yaml
-run: |
-  docker build -t lodestone-mcp:0.1.0rc1 .
+```text
+$ gh run view 40726266215 --job 122950260577 --log
+docker	Build MCP image	##[group]Run docker build -t lodestone-mcp:0.1.0rc1 .
+docker	Build MCP image	docker build -t lodestone-mcp:0.1.0rc1 .
+...
+docker	Build MCP image	#11 5.376   Created wheel for lodestone-kb: filename=lodestone_kb-0.1.0rc1-py3-none-any.whl size=149544 sha256=31729cf8ab5f8e2e1dd5e6b408fc9bba194843bb4698cab2e1d00cdf6e3fc029
+docker	Build MCP image	#11 5.378 Successfully built lodestone-kb
+...
+docker	Build MCP image	#11 DONE 8.7s
+docker	Build MCP image	#12 exporting to image
+docker	Build MCP image	#12 naming to docker.io/library/lodestone-mcp:0.1.0rc1 done
+docker	Build MCP image	#12 unpacking to docker.io/library/lodestone-mcp:0.1.0rc1 0.7s done
+docker	Build MCP image	#12 DONE 2.9s
 ```
-
-No `docker push`. Transcript from that job is pasted under CI below once
-the PR run finishes.
 
 ## FINDINGS H1–H5
 
@@ -194,19 +202,95 @@ All **M** requirements are green.
 ## Authorship
 
 ```text
-$ git log 5bfe7f4..HEAD --format='%h %an <%ae> | %cn <%ce>'
+$ git log 5bfe7f4..3810a63 --format='%h %an <%ae> | %cn <%ce>'
+3810a63 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 5eb77b8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 728d6cc Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 2b88d97 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 53a9e9a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
 
-$ git log 5bfe7f4..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+$ git log 5bfe7f4..3810a63 --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
 0
 ```
 
 ## CI (PR head)
 
-PR: (filled after open)
-PR head SHA: (filled after push)
-CI run URL: (filled after green)
-conclusion: (filled after `gh run view`)
+PR: https://github.com/drkwv34/lodestone-kb/pull/17
+PR head SHA: `3810a635b722bbf1150135a9565e96cb5de08ffd`
+CI run URL: https://github.com/drkwv34/lodestone-kb/actions/runs/40726266215
+conclusion: success (10 jobs, including macOS and docker)
+
+```text
+$ gh run view 40726266215 --json conclusion,headSha,url,status
+{"conclusion":"success","headSha":"3810a635b722bbf1150135a9565e96cb5de08ffd","status":"completed","url":"https://github.com/drkwv34/lodestone-kb/actions/runs/40726266215"}
+
+$ gh run view 40726266215
+
+✓ feat/release-candidate ci drkwv34/lodestone-kb#17 · 40726266215
+Triggered via pull_request
+
+JOBS
+✓ lint-type in 34s (ID 122950260135)
+✓ build in 39s (ID 122950260513)
+✓ licenses in 31s (ID 122950260565)
+✓ docker in 22s (ID 122950260577)
+✓ openspec in 9s (ID 122950260642)
+✓ test (macos-latest, 3.12) in 2m12s (ID 122950617344)
+✓ test (ubuntu-latest, 3.13) in 1m14s (ID 122950617586)
+✓ test (ubuntu-latest, 3.11) in 1m31s (ID 122950617638)
+✓ test (windows-latest, 3.12, true) in 1m21s (ID 122950617884)
+✓ test (ubuntu-latest, 3.12) in 1m35s (ID 122950618035)
+```
+
+## Merge and archive
+
+Merge commit: `e82c348c4a7ab09e724b7a10d67270e007db4478`. Author and committer
+are Christian Agila <87576768+drkwv34@users.noreply.github.com>. Two parents
+(`5bfe7f4` and `3810a63`). No co-author trailers.
+
+```text
+$ git log -1 --format='%H%n%h %an <%ae> | %cn <%ce>%nparents %P%n%B' e82c348
+e82c348c4a7ab09e724b7a10d67270e007db4478
+e82c348 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+parents 5bfe7f48eb35227edeb0069a539305424e277372 3810a635b722bbf1150135a9565e96cb5de08ffd
+Merge pull request #17 from drkwv34/feat/release-candidate
+```
+
+OpenSpec archived as `2026-10-28-add-release-candidate` on main at
+`475fac6e0787cecc5b3088e0e220eb9ca5c5e49d`. Specs synced (new
+`beir-adapter` and `mcp-container` main specs; `docs-packaging` updated).
+
+```text
+$ openspec archive add-release-candidate --yes
+Task status: ✓ Complete
+
+Specs to update:
+  beir-adapter: update
+  docs-packaging: update
+  mcp-container: update
+Totals: + 0, ~ 0, - 0, → 0
+Specs already in sync; no files changed.
+Change 'add-release-candidate' archived as '2026-10-28-add-release-candidate'.
+
+$ openspec validate --all --strict
+✓ spec/beir-adapter
+✓ spec/bench-agentic-advise
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/docs-packaging
+✓ spec/fusion-search
+✓ spec/hardening
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/mcp-container
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 16 passed, 0 failed (16 items)
+
+$ openspec list
+No active changes found.
+```
