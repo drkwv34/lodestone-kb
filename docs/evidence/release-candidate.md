@@ -191,11 +191,17 @@ See [docs/benchmarks/FINDINGS.md](../benchmarks/FINDINGS.md). All five are
 
 All **M** requirements are green.
 
-## Authorship (filled after commits)
+## Authorship
 
 ```text
 $ git log 5bfe7f4..HEAD --format='%h %an <%ae> | %cn <%ce>'
-# pasted after the feature commits land
+5eb77b8 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+728d6cc Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+2b88d97 Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+53a9e9a Christian Agila <87576768+drkwv34@users.noreply.github.com> | Christian Agila <87576768+drkwv34@users.noreply.github.com>
+
+$ git log 5bfe7f4..HEAD --format=%B | grep -ci 'co-authored-by\|cursor\[bot\]'
+0
 ```
 
 ## CI (PR head)
