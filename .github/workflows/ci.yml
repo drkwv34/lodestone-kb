@@ -87,3 +87,10 @@ jobs:
           "$RUNNER_TEMP/lodestone-wheel/bin/pip" install dist/*.whl
       - run: |
           "$RUNNER_TEMP/lodestone-wheel/bin/python" scripts/smoke_wheel.py
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build MCP image
+        run: |
+          docker build -t lodestone-mcp:0.1.0rc1 .

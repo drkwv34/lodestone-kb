@@ -56,9 +56,24 @@ Until those keys exist: `status: not run - needs keys`.
 
 ## Hypotheses H1–H5
 
-H1–H5 in the SRS need a real embedder and/or a larger labelled corpus. This
-hash-embedder plumbing run **does not** support those claims. Status: not
-tested (see real-embedder line above).
+Statuses use only numbers from the committed synthetic run above
+([synth-offline-report.md](synth-offline-report.md),
+[synth-offline-advise.md](synth-offline-advise.md)) and [scale.md](scale.md).
+The hash embedder is not semantic, so these rows cannot support embedding
+quality claims. Real-embedder run: `status: not run - needs keys`.
+
+| ID | Hypothesis | Status | Evidence |
+|---|---|---|---|
+| H1 | On `paraphrase` and `tangent_in_long_thread`, `lodestone-hybrid` improves recall@5 over `classic-rag` by >= 10 pp | not tested | Committed run did not include `lodestone-hybrid`. Hash embedder is not semantic. |
+| H2 | On `exact_token`, `lodestone-lexical` is within 3 pp of `lodestone-hybrid` | not tested | Committed run did not include `lodestone-hybrid`. `lodestone-lexical` exact_token recall@10 = 1.000000 in [synth-offline-report.md](synth-offline-report.md). |
+| H3 | On `stale_vs_fresh`, decay raises the correct (fresh) answer rank over `--no-decay` in >= 80% of paired cases | not tested | Committed run did not compare decay vs `--no-decay`. |
+| H4 | Cards cost X tokens/record at ingest; report break-even vs per-query savings | not tested | Committed run used heuristic cards (`lodestone-lexical` in_tokens = 0, usd = 0.000000). No LLM card-cost series. |
+| H5 | `full-context` wins accuracy when corpus <= budget but costs >= 5x per query | not tested | Committed run did not include `full-context`. |
+
+Related (not H1–H5): `lodestone bench advise` on this hash-embedder run said
+`distillation helps` (R3) because lodestone-lexical paraphrase recall@10 =
+1.0000 > classic-rag = 0.0000. That is lexical overlap on a synthetic
+corpus, not a semantic embedding result.
 
 ## Other measured runs
 

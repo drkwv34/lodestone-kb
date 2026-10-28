@@ -22,7 +22,7 @@ project, not affiliated with Cerebras.
 ## Quickstart (offline, 2 minutes)
 
 Python 3.11+ with SQLite FTS5. The intended install is `pip install lodestone-kb`
-once a release is published. This tree is `0.1.0.dev0` and is **not** on PyPI
+once a release is published. This tree is `0.1.0rc1` and is **not** on PyPI
 yet; install from source:
 
 ```sh
@@ -72,13 +72,14 @@ True
 
 Shipped CLI: `init`, `doctor`, `config show`, `source add/list/remove/sync`,
 `sync`, `search`, `grep`, `get`, `who-knows`, `recent`, `ask`, `mcp`, `stats`,
-`cost`, `reindex`, `bench synth|generate|run|report|advise`. Python SDK:
+`cost`, `reindex`, `bench synth|generate|run|report|advise|import`. Python SDK:
 `Lodestone.open`. Read-only MCP stdio server. Optional OpenAI-compatible chat
 and embeddings. Hash embedder is deterministic and **not semantic**.
 
 Guides: [concepts](docs/concepts.md) · [connectors](docs/connectors.md) ·
 [MCP](docs/mcp.md) · [bench](docs/bench.md) · [privacy](docs/privacy.md) ·
-[FAQ](docs/faq.md) · [provider presets](docs/providers.md)
+[FAQ](docs/faq.md) · [provider presets](docs/providers.md) ·
+[release](docs/RELEASE.md)
 
 ## MCP (Claude Code / Cursor)
 

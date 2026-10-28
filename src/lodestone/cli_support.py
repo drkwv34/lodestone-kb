@@ -6,6 +6,8 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import asdict
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 from pathlib import Path
 from typing import Annotated
 
@@ -16,6 +18,17 @@ from lodestone.providers import OfflineError, ProviderError
 from lodestone.storage.db import StorageError
 
 ConfigOption = Annotated[Path, typer.Option("--config", "-c", help="Path to lodestone.toml.")]
+
+
+def show_version(value: bool) -> None:
+    if value:
+        try:
+            text = package_version("lodestone-kb")
+        except PackageNotFoundError:
+            text = "0.1.0rc1"
+        typer.echo(text)
+        raise typer.Exit(0)
+
 
 Caught = (
     ConfigError,

@@ -14,6 +14,17 @@ lodestone bench report ./bench/run
 lodestone bench advise ./bench/run
 ```
 
+Import a local BEIR-format dataset (no download):
+
+```sh
+lodestone bench import beir:scifact --from ./beir/scifact --out ./bench/scifact
+```
+
+`--from` is a directory or zip with `corpus.jsonl`, `queries.jsonl`, and
+`qrels/*.tsv`. Gold ids become files-connector paths (`docs/<id>.md`).
+Omitting `--from` downloads the public SciFact zip and checks MD5
+`5f7d1de60b170fc8027bb7898e2efca1`. That download is not part of CI.
+
 `synth` writes a deterministic corpus plus `evalset.v1` JSONL. Same seed
 produces byte-identical output. `generate` samples questions from an existing
 workspace and drops questions whose token overlap with the gold record exceeds

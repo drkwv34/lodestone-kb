@@ -7,8 +7,12 @@ import sys
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
+
+from lodestone.cli import app
 
 ROOT = Path(__file__).resolve().parents[2]
+runner = CliRunner(env={"NO_COLOR": "1", "FORCE_COLOR": "0", "TERM": "dumb"})
 REQUIRED_DOCS = (
     "README.md",
     "docs/quickstart.md",
@@ -21,6 +25,8 @@ REQUIRED_DOCS = (
     "docs/providers.md",
     "docs/compatibility.md",
     "docs/benchmarks/FINDINGS.md",
+    "docs/RELEASE.md",
+    "CHANGELOG.md",
 )
 
 
@@ -75,6 +81,43 @@ def test_nfr_benchmark_findings_not_run_needs_keys() -> None:
     text = (ROOT / "docs/benchmarks/FINDINGS.md").read_text(encoding="utf-8")
     assert "status: not run - needs keys" in text
     assert "hash embedder is not semantic" in text.lower() or "not semantic" in text.lower()
+    lowered = text.lower()
+    for hypothesis in ("h1", "h2", "h3", "h4", "h5"):
+        assert hypothesis in lowered
+    assert "not tested" in lowered
+    assert "held / not held / not tested" in lowered or "| not tested |" in lowered
+
+
+def test_fr_version_cli_matches_package() -> None:
+    from importlib.metadata import version
+
+    from lodestone import __version__
+
+    result = runner.invoke(app, ["--version"], color=False)
+    assert result.exit_code == 0, result.output
+    assert __version__ == "0.1.0rc1"
+    assert version("lodestone-kb") == "0.1.0rc1"
+    assert "0.1.0rc1" in result.output
+
+
+def test_fr_mcp_dockerfile_entrypoint() -> None:
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "ENTRYPOINT" in dockerfile
+    assert "lodestone" in dockerfile
+    assert "mcp" in dockerfile
+    assert "--offline" in dockerfile
+    dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
+    assert "tests" in dockerignore
+    assert ".git" in dockerignore
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert "docker build" in workflow
+    assert "docker push" not in workflow
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [0.1.0rc1]" in changelog
+    release = (ROOT / "docs/RELEASE.md").read_text(encoding="utf-8")
+    assert "v0.1.0-rc1" in release
+    assert "PyPI" in release
+    assert (ROOT / "docs/decisions/0008-release-candidate.md").is_file()
 
 
 def test_release_workflow_has_no_pypi_publish() -> None:

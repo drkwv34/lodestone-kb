@@ -33,7 +33,7 @@ does not publish to PyPI.
 
 ## How stable is the public API?
 
-Version `0.1.0.dev0` is pre-release. After `0.1.0`, the SDK, MCP tool
+Version `0.1.0rc1` is a release candidate, not a PyPI publish. After `0.1.0`, the SDK, MCP tool
 schemas, and `*.v1` JSON schemas follow semver. Deprecations warn for one
 minor version before removal. See [compatibility.md](compatibility.md).
 

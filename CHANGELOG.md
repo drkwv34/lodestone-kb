@@ -2,7 +2,32 @@
 
 All notable changes are documented in this file.
 
-## 0.1.0.dev0
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+after the first `0.1.0` release. See [docs/RELEASE.md](docs/RELEASE.md).
+
+## [0.1.0rc1] - 2026-10-28
+
+Release candidate. Not published to PyPI.
+
+### Added
+
+- `lodestone bench import beir:scifact` converts a local BEIR-format corpus,
+  queries, and qrels into markdown documents plus `evalset.v1` (FR-079).
+  Default tests use a tiny fixture; optional public-mirror download verifies
+  the published SciFact MD5 and is network-marked.
+- Dockerfile for the read-only MCP stdio server (`lodestone mcp --offline`)
+  and an Ubuntu CI job that runs `docker build` without pushing an image.
+- `lodestone --version` prints the package version (`0.1.0rc1`).
+- `docs/RELEASE.md` release checklist and later PyPI cut notes.
+- Honest H1–H5 hypothesis table in `docs/benchmarks/FINDINGS.md`.
+
+### Changed
+
+- Package version is `0.1.0rc1` (PEP 440). Git tag for this candidate is
+  `v0.1.0-rc1`.
+
+## [0.1.0.dev0]
 
 Pre-release development snapshot. Not published to PyPI.
 

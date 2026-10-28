@@ -20,6 +20,7 @@ from lodestone.cli_support import (
     configuration,
     fail,
     mcp_command,
+    show_version,
 )
 from lodestone.config import ConfigError, Source, redact
 from lodestone.ingest.reindex import reindex_workspace
@@ -48,6 +49,17 @@ configure_logging()
 app = typer.Typer(no_args_is_help=True, help="Lodestone local knowledge workspace.")
 config_app = typer.Typer(no_args_is_help=True)
 app.add_typer(config_app, name="config")
+
+
+@app.callback()
+def _root(
+    version: Annotated[
+        bool, typer.Option("--version", callback=show_version, is_eager=True)
+    ] = False,
+) -> None:
+    """Lodestone local knowledge workspace."""
+
+
 source_app = typer.Typer(no_args_is_help=True)
 app.add_typer(source_app, name="source")
 app.command("mcp")(mcp_command)

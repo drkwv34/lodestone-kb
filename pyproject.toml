@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lodestone-kb"
-version = "0.1.0.dev0"
+dynamic = ["version"]
 description = "Embedding-optional knowledge engine with distilled cards, hybrid search, MCP and a RAG-strategy benchmark."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +20,9 @@ dev = ["pytest>=8", "pytest-cov", "hypothesis", "mypy", "ruff", "import-linter",
 
 [project.scripts]
 lodestone = "lodestone.cli:app"
+
+[tool.hatch.version]
+path = "src/lodestone/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lodestone"]
