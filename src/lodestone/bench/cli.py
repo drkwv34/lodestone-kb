@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Typer subcommands for lodestone bench synth, generate, run, report, and advise."""
+"""Typer subcommands for lodestone bench synth, generate, run, report, advise, import."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from typing import Annotated
 import typer
 
 from lodestone.bench.advise import advise
+from lodestone.bench.beir import BeirError, import_beir
 from lodestone.bench.evalset import EvalsetError
 from lodestone.bench.questions import DEFAULT_LEAKAGE_MAX, dump_evalset, generate_from_config
 from lodestone.bench.report import write_report
@@ -126,6 +127,27 @@ def report_cmd(run_dir: Annotated[Path, typer.Argument()]) -> None:
     except (OSError, ValueError, KeyError) as extra:
         _fail("Report", extra)
     typer.echo(str(markdown_path))
+
+
+@bench_app.command("import")
+def import_cmd(
+    spec: Annotated[str, typer.Argument(help="beir:<dataset>, currently beir:scifact")],
+    out: Annotated[Path, typer.Option("--out")],
+    source: Annotated[
+        Path | None,
+        typer.Option("--from", help="Local BEIR directory or zip; skip the public download."),
+    ] = None,
+) -> None:
+    """Convert a BEIR-format dataset into a Lodestone corpus and evalset.v1."""
+    try:
+        result = import_beir(spec, out, source=source)
+    except BeirError as extra:
+        typer.echo(f"Configuration error: {extra}", err=True)
+        raise typer.Exit(2) from None
+    except OSError as extra:
+        _fail("Import", extra)
+    typer.echo(f"wrote {result.questions} questions to {result.evalset}")
+    typer.echo(f"documents {result.documents}")
 
 
 @bench_app.command("advise")

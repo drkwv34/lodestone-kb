@@ -12,7 +12,7 @@ runner = CliRunner(env={"NO_COLOR": "1", "FORCE_COLOR": "0", "TERM": "dumb"})
 
 
 def test_fr_051_bench_commands(tmp_path: Path) -> None:
-    for name in ("synth", "run", "report", "generate", "advise"):
+    for name in ("synth", "run", "report", "generate", "advise", "import"):
         result = runner.invoke(app, ["bench", name, "--help"], color=False)
         assert result.exit_code == 0, result.output
     synth = runner.invoke(
@@ -62,6 +62,21 @@ def test_fr_051_bench_commands(tmp_path: Path) -> None:
     )
     assert unknown.exit_code == 2
     assert "unknown strategy" in unknown.output
+    fixture = Path(__file__).resolve().parents[1] / "fixtures/beir/scifact"
+    imported = runner.invoke(
+        app,
+        [
+            "bench",
+            "import",
+            "beir:scifact",
+            "--from",
+            str(fixture),
+            "--out",
+            str(tmp_path / "beir"),
+        ],
+    )
+    assert imported.exit_code == 0, imported.output
+    assert (tmp_path / "beir" / "evalset.jsonl").is_file()
 
 
 def test_fr_070_run_validates_evalset(tmp_path: Path) -> None:
