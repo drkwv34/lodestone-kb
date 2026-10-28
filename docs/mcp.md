@@ -15,6 +15,16 @@ lodestone mcp --config lodestone.toml --offline
 untrusted-host setups. The server does not ingest or mutate records; use
 `lodestone sync` from the CLI for writes.
 
+A `Dockerfile` at the repository root installs the package and runs
+`lodestone mcp --offline`. CI builds the image on Ubuntu (`docker build`
+only; no registry push):
+
+```sh
+docker build -t lodestone-mcp:0.1.0rc1 .
+docker run --rm -i -v /absolute/path/to/workspace:/workspace:ro \
+  lodestone-mcp:0.1.0rc1 --config /workspace/lodestone.toml --offline
+```
+
 ## Claude Code
 
 Add a stdio server in Claude Code's MCP settings (JSON). Adjust the command
