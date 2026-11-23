@@ -95,6 +95,17 @@ def validate_packet(packet: dict[str, Any], schema: dict[str, Any] | None = None
             raise ValueError(f"evidence.v1 extra fields: {sorted(extra)}")
     if packet.get("schema") != "evidence.v1":
         raise ValueError("schema must be evidence.v1")
+    explain = packet.get("explain")
+    if explain is None:
+        return
+    if not isinstance(explain, dict):
+        raise ValueError("explain must be an object")
+    allowed = {"lanes", "rrf", "decay_factor", "rerank_score", "final"}
+    extra_explain = set(explain) - allowed
+    if extra_explain:
+        raise ValueError(f"explain extra fields: {sorted(extra_explain)}")
+    if "lanes" not in explain or not isinstance(explain["lanes"], dict):
+        raise ValueError("explain missing lanes")
 
 
 def packet_from_row(

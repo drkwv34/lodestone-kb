@@ -161,12 +161,12 @@ def test_fr_040_explain_contributions_sum_to_fused_score(database, record_factor
     result = fused_search(database, config, "alpha", scope=Scope(), explain=True, decay=True)
     assert result.packets
     explain = result.packets[0]["explain"]
-    contributions = [
-        info["contribution"] for name, info in explain.items() if isinstance(info, dict)
-    ]
+    lanes = explain["lanes"]
+    contributions = [info["contribution"] for info in lanes.values() if isinstance(info, dict)]
     assert sum(contributions) == pytest.approx(explain["rrf"], abs=1e-12)
     assert explain["rrf"] * explain["decay_factor"] == pytest.approx(explain["final"], abs=1e-9)
     assert explain["final"] == pytest.approx(result.hits[0].score, abs=1e-9)
+    assert set(explain) <= {"lanes", "rrf", "decay_factor", "rerank_score", "final"}
 
 
 def test_fr_042_evidence_packet_schema(database, record_factory) -> None:
@@ -175,7 +175,7 @@ def test_fr_042_evidence_packet_schema(database, record_factory) -> None:
     result = fused_search(database, config, "schema", scope=Scope(), explain=True)
     schema = evidence_schema()
     assert schema["title"] == "evidence.v1"
-    packet = {key: value for key, value in result.packets[0].items() if key != "explain"}
+    packet = result.packets[0]
     validate_packet(packet, schema)
     for key in schema["required"]:
         assert key in packet

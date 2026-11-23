@@ -27,7 +27,8 @@ def test_fr_040_fr_034_fused_explain_and_grep_cli(tmp_path: Path) -> None:
     assert payload["lane"] == "fused"
     assert payload["hits"]
     explain = payload["hits"][0]["explain"]
-    contributions = [info["contribution"] for info in explain.values() if isinstance(info, dict)]
+    lanes = explain["lanes"]
+    contributions = [info["contribution"] for info in lanes.values() if isinstance(info, dict)]
     assert contributions
     assert abs(sum(contributions) * explain["decay_factor"] - explain["final"]) < 1e-9
     human = command(tmp_path, "search", "ERR_MANIFEST_TIMEOUT", "--explain", "--offline")

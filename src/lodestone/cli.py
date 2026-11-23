@@ -251,9 +251,11 @@ def search(
             packet = result.packets[rank - 1] if rank - 1 < len(result.packets) else None
             detail = packet.get("explain") if isinstance(packet, dict) else None
             if isinstance(detail, dict):
+                lanes = detail.get("lanes")
+                lane_map = lanes if isinstance(lanes, dict) else {}
                 parts = [
                     f"{name} r={info.get('rank')} c={info.get('contribution', 0):.4f}"
-                    for name, info in detail.items()
+                    for name, info in lane_map.items()
                     if isinstance(info, dict)
                 ]
                 typer.echo(

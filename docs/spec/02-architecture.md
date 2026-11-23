@@ -232,7 +232,7 @@ def decay(score, updated_at, now, half_life_days, floor) -> float  # max(floor, 
 def collapse(parents, per_source_cap, pool) -> list[Hit]
 def expand(hits, db, n, max_chars) -> list[Hit]
 ```
-`explain` object per hit: `{lane: {rank, raw_score, contribution}}, rrf, decay_factor, rerank_score, final`.
+`explain` object per hit: `{lanes: {lane: {rank, raw_score, contribution}}, rrf, decay_factor, rerank_score, final}`.
 
 ### 3.9 `rerank`
 `LLMReranker.rerank(query, hits) -> list[(id, score)]`; prompt gives numbered snippets (<=1,200 chars) with ids, asks for strict JSON; scores clamped 0-10; missing ids get 0; any exception -> fallback + notice; result is a permutation of the input pool (property tested). Sorting key: (rerank score desc, fused score desc).

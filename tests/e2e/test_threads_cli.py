@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from lodestone.cli import app
 from lodestone.config import load_config
 from lodestone.workspace import search_workspace
+from tests.integration.test_thread_ingest import cerebras_messages, thread_payload, write_source
 
 ROOT = Path(__file__).parents[2]
 EXPORT = ROOT / "tests/fixtures/slack_export"
@@ -86,6 +87,29 @@ def test_fr_011_fr_012_threads_sync_search_smoke(tmp_path: Path) -> None:
     assert json.loads(third.stdout)["processed"] == 1
     later = search_workspace(cfg, "APPENDED_THREAD_TOKEN", kinds=["thread"])
     assert later and later[0].ext_id == "1719830040.000100"
+
+
+def test_fr_041_fused_kind_burst_json(tmp_path: Path) -> None:
+    exported = write_source(tmp_path / "support.jsonl", [thread_payload(cerebras_messages())])
+    workspace = tmp_path / "workspace"
+    assert runner.invoke(app, ["init", str(workspace)]).exit_code == 0
+    config = workspace / "lodestone.toml"
+    args = ["--config", str(config)]
+    added = runner.invoke(
+        app,
+        ["source", "add", "support", "--kind", "threads", "--path", str(exported), *args],
+    )
+    assert added.exit_code == 0, added.output
+    synced = runner.invoke(app, ["sync", "--offline", *args])
+    assert synced.exit_code == 0, synced.output
+    result = runner.invoke(
+        app, ["search", "UNIQUE_BURST_TOKEN", "--kind", "burst", "--json", *args]
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["hits"]
+    assert all(hit["kind"] == "burst" for hit in payload["hits"])
+    assert all(hit["kind"] != "thread" for hit in payload["hits"])
 
 
 def test_fr_011_example_script_rejects_missing_directory(tmp_path: Path) -> None:

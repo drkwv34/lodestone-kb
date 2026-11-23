@@ -26,7 +26,7 @@ from lodestone.lanes.fts import Hit, LaneName
 from lodestone.lanes.fts import search as fts_search
 from lodestone.lanes.grep import search as grep_search
 from lodestone.lanes.result import SearchResult
-from lodestone.lanes.scope import Scope
+from lodestone.lanes.scope import Scope, matches
 from lodestone.lanes.vec import VecLane
 from lodestone.lanes.vec import search as vec_search
 from lodestone.providers import Chat
@@ -203,7 +203,10 @@ def fused_search(
         )
     ranked.sort(key=lambda item: (item.score, item.updated_at, -item.id), reverse=True)
     selected = collapse(
-        ranked, max_per_source=retrieval.max_per_source, pool=retrieval.candidate_pool
+        ranked,
+        max_per_source=retrieval.max_per_source,
+        pool=retrieval.candidate_pool,
+        promote_parent=scope.kinds is None,
     )
     rerank_scores: dict[int, float] = {}
     want_rerank = retrieval.rerank if rerank is None else rerank
@@ -230,6 +233,17 @@ def fused_search(
         final, factor = decayed[member]
         row = _row(connection, item.id) or _row(connection, member)
         if row is None:
+            continue
+        authors = [str(name) for name in row.get("authors") or []]
+        if not matches(
+            scope,
+            kind=str(row["kind"]),
+            source=str(row["source"]),
+            author=None if row.get("author") is None else str(row["author"]),
+            authors=authors,
+            updated_at=str(row.get("updated_at") or ""),
+            metadata=row.get("metadata") if isinstance(row.get("metadata"), dict) else {},
+        ):
             continue
         if member in hits_by_id and hits_by_id[member].snippet:
             row["snippet"] = hits_by_id[member].snippet
@@ -281,15 +295,8 @@ def fused_search(
         if explain_obj is None:
             payload.pop("explain", None)
         else:
-            payload["explain"] = {
-                **{name: model.model_dump() for name, model in explain_obj.lanes.items()},
-                "rrf": explain_obj.rrf,
-                "decay_factor": explain_obj.decay_factor,
-                "rerank_score": explain_obj.rerank_score,
-                "final": explain_obj.final,
-            }
-        check = {key: value for key, value in payload.items() if key != "explain"}
-        validate_packet(check)
+            payload["explain"] = explain_obj.model_dump()
+        validate_packet(payload)
         packets.append(payload)
         hits.append(_hit_from_evidence(packet, str(row["ext_id"])))
     return SearchResult(hits, notices, "fused", packets)
