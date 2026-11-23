@@ -32,6 +32,11 @@ connections.
 - **WHEN** a write is attempted through the MCP database connection
 - **THEN** SQLite rejects the write
 
+#### Scenario: Search with explain true
+- **WHEN** an MCP client calls `search` with `explain` true
+- **THEN** the call succeeds and each hit validates as `evidence.v1` including
+  a nested `explain.lanes` object
+
 ### Requirement: FR-043 who-knows MCP tool
 The system SHALL expose "FR-043" `who_knows` as an MCP tool that ranks authors
 by in-scope records matching the topic, weighted by recency and burst or

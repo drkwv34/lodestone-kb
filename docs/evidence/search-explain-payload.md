@@ -56,3 +56,52 @@ $ python3 -m pytest -q \
 Local gates: `ruff check .`, `mypy --strict src`, `lint-imports`,
 `scripts/check_modules.py`, `openspec validate fix-search-explain-payload --strict`,
 pytest coverage 91% (>= 85%).
+
+## PR head CI
+
+- PR: https://github.com/drkwv34/lodestone-kb/pull/18
+- Head SHA: `a2fafdba156fe68c2407b4669b9de33dc278b441`
+- Run: https://github.com/drkwv34/lodestone-kb/actions/runs/45093707126
+- Conclusion: success (10/10 jobs)
+
+## Merge
+
+```text
+$ git merge --no-ff fix/search-explain-payload -m "Merge pull request #18 from drkwv34/fix/search-explain-payload"
+Merge made by the 'ort' strategy.
+```
+
+Merge commit: `e8bbfccf0fb9baa63d28d524fb4423386a7cd981`
+Author and committer: Christian Agila `<87576768+drkwv34@users.noreply.github.com>`
+Message is exactly one line: `Merge pull request #18 from drkwv34/fix/search-explain-payload`
+
+## Archive (on main)
+
+```text
+$ openspec archive fix-search-explain-payload --yes --skip-specs
+Task status: ✓ Complete
+Skipping spec updates (--skip-specs flag provided).
+Change 'fix-search-explain-payload' archived as '2026-11-23-fix-search-explain-payload'.
+
+$ openspec validate --all --strict
+✓ spec/beir-adapter
+✓ spec/bench-agentic-advise
+✓ spec/bench-formats-synth
+✓ spec/chunkers-sources
+✓ spec/docs-packaging
+✓ spec/fusion-search
+✓ spec/hardening
+✓ spec/lexical-search
+✓ spec/mcp-ask
+✓ spec/mcp-container
+✓ spec/providers-distillation
+✓ spec/repository-gates
+✓ spec/rerank-sdk-cli
+✓ spec/threads-bursts
+✓ spec/vector-lanes
+✓ spec/workspace-foundation
+Totals: 16 passed, 0 failed (16 items)
+```
+
+Main specs were synced from the change deltas before `--skip-specs` (FR-037, FR-040,
+FR-041, FR-042, FR-050, FR-052). `ruff format .` left 325 files unchanged.
