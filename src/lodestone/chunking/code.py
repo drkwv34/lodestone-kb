@@ -14,7 +14,7 @@ from itertools import pairwise
 from lodestone.chunking import Chunk, pack
 from lodestone.config import Chunks
 
-VERSION = "code-v1"
+VERSION = "code-v2"
 CLASS = r"\b(?:class|struct|enum|interface|trait|impl)\s+(\w+)"
 C_FUNCTION = (
     r"^\s*(?:(?:[\w*&:<>,\[\]]+)[ \t]+)+([~\w]+)\s*\([^;{}]*\)"
@@ -124,14 +124,12 @@ def outline(text: str, language: str) -> str:
 def chunk(text: str, language: str, title: str = "", config: Chunks | None = None) -> list[Chunk]:
     cfg = config or Chunks()
     found = symbols(text, language)
-    # Methods are always independent units. Oversized methods refine at block boundaries.
+    # Methods are always independent units. Blocks under a method become children
+    # even when the method is under target_tokens (class → method → block).
     cuts = {0, len(text)}
-    target = cfg.target_tokens * cfg.chars_per_token
     for symbol in found:
         if symbol.level < 2 or any(
-            enclosing.level == 1
-            and enclosing.start < symbol.start < enclosing.end
-            and enclosing.end - enclosing.start > target
+            enclosing.level == 1 and enclosing.start < symbol.start < enclosing.end
             for enclosing in found
         ):
             cuts.add(symbol.start)

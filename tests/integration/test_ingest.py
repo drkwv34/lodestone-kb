@@ -80,6 +80,47 @@ def test_fr_014_hash_normalization_and_version() -> None:
     assert len(content_hash("a")) == 64
 
 
+def test_fr_014_fr_016_chunker_version_rewrites_code_children(
+    database: sqlite3.Connection, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    figure = Path(__file__).parents[1] / "fixtures/chunking/figure.code"
+    root = tmp_path / "corpus"
+    root.mkdir()
+    (root / "processor.py").write_text(figure.read_text(encoding="utf-8"), encoding="utf-8")
+    config = Config(sources=[Source(name="code", kind="files", path=root)])
+    assert sync(database, config).processed == 1
+    parent = database.execute(
+        "SELECT id, content_hash, derived_state FROM records WHERE ext_id='processor.py'"
+    ).fetchone()
+    titles = [
+        row[0]
+        for row in database.execute(
+            "SELECT title FROM records WHERE parent_id=? ORDER BY seq, id", (parent[0],)
+        )
+    ]
+    assert titles == [
+        "processor > Processor",
+        "processor > Processor > run",
+        "processor > Processor > run > if",
+        "processor > Processor > run > for",
+        "processor > Processor > stop",
+    ]
+    monkeypatch.setattr("lodestone.ingest.pipeline.CHUNKER_VERSION", "markdown-v1/code-v-test")
+    rewritten = sync(database, config)
+    assert rewritten.processed == 1
+    after = database.execute(
+        "SELECT content_hash, derived_state FROM records WHERE ext_id='processor.py'"
+    ).fetchone()
+    assert after[0] != parent[1]
+    assert after[1] in {"pending", "ok"}
+    assert (
+        database.execute("SELECT count(*) FROM records WHERE parent_id=?", (parent[0],)).fetchone()[
+            0
+        ]
+        == 5
+    )
+
+
 def test_fr_014_edit_counts_chunking_and_replaces_children_atomically(
     database: sqlite3.Connection, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
