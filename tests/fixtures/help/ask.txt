@@ -12,8 +12,8 @@
 │ --project             <str>                                                  │
 │ --max-rounds          <int>                                                  │
 │ --provider            <str>   fake or config.                                │
-│ --offline                                                                    │
-│ --json                                                                       │
-│ --help                        Show this message and exit.                    │
+│ --offline             <bool>                                                 │
+│ --json                <bool>                                                 │
+│ --help                <bool>  Show this message and exit.                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 

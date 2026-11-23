@@ -9,7 +9,7 @@
 │ --project            <str>                                                   │
 │ --since              <str>                                                   │
 │ --limit,--n          <int range> [x>=1]  [default: 10]                       │
-│ --json                                                                       │
-│ --help                                   Show this message and exit.         │
+│ --json               <bool>                                                  │
+│ --help               <bool>              Show this message and exit.         │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 

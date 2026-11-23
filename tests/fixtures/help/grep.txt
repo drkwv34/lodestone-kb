@@ -10,11 +10,11 @@
 │ --config     -c      <path>              Path to lodestone.toml.             │
 │                                          [default: lodestone.toml]           │
 │ --project            <str>                                                   │
-│ --regex                                                                      │
+│ --regex              <bool>                                                  │
 │ --path-glob          <str>                                                   │
 │ --context            <int range> [x>=0]  [default: 2]                        │
 │ --limit              <int range> [x>=1]  [default: 20]                       │
-│ --json                                                                       │
-│ --help                                   Show this message and exit.         │
+│ --json               <bool>                                                  │
+│ --help               <bool>              Show this message and exit.         │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 

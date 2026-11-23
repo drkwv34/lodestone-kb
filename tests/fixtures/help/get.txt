@@ -9,7 +9,7 @@
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --config  -c      <path>  Path to lodestone.toml. [default: lodestone.toml]  │
 │ --source          <str>                                                      │
-│ --json                                                                       │
-│ --help                    Show this message and exit.                        │
+│ --json            <bool>                                                     │
+│ --help            <bool>  Show this message and exit.                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 

@@ -11,7 +11,7 @@
 │                                        [default: lodestone.toml]             │
 │ --project          <str>                                                     │
 │ --limit            <int range> [x>=1]  [default: 5]                          │
-│ --json                                                                       │
-│ --help                                 Show this message and exit.           │
+│ --json             <bool>                                                    │
+│ --help             <bool>              Show this message and exit.           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 

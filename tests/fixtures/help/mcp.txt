@@ -5,7 +5,7 @@
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --config   -c      <path>  Path to lodestone.toml. [default: lodestone.toml] │
-│ --offline                                                                    │
-│ --help                     Show this message and exit.                       │
+│ --offline          <bool>                                                    │
+│ --help             <bool>  Show this message and exit.                       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
