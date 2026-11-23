@@ -14,11 +14,16 @@ after the first `0.1.0` release. See [docs/RELEASE.md](docs/RELEASE.md).
   validate against `Explain` (`extra="forbid"`).
 - Fused search with a kind filter lists the matching member (for example a
   burst) instead of promoting the parent thread.
+- Code chunking emits `if`/`for` (and similar) block children under their
+  method even when the method is under `target_tokens`, matching FR-016 and
+  `tests/fixtures/chunking/figure.json`.
 
 ### Changed
 
 - `--explain` JSON uses `{lanes, rrf, decay_factor, rerank_score, final}`
   instead of flattening lane names onto the explain object.
+- Code chunker version is `code-v2`; the next `sync` rewrites stored `code`
+  children whose parent hash still used `code-v1`.
 
 ## [0.1.0rc1] - 2026-10-28
 
