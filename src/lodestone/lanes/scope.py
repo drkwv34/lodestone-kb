@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Any
 
 KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -84,3 +85,40 @@ def clauses(
             where.append(f"CAST(json_extract({record}.metadata_json, ?) AS TEXT) = ?")
             parameters.extend(["$." + key, value])
     return where, parameters
+
+
+def matches(
+    scope: Scope,
+    *,
+    kind: str,
+    source: str,
+    author: str | None,
+    authors: list[str],
+    updated_at: str,
+    metadata: dict[str, Any] | None,
+) -> bool:
+    """Return whether a record would satisfy the same filters as `clauses`."""
+    if scope.sources is not None and source not in scope.sources:
+        return False
+    if scope.kinds is not None and kind not in scope.kinds:
+        return False
+    if scope.authors is not None:
+        names = {str(item) for item in authors}
+        if author:
+            names.add(str(author))
+        if not names.intersection(scope.authors):
+            return False
+    if scope.since and updated_at < scope.since:
+        return False
+    if scope.until:
+        until = scope.until
+        if len(until) == 10:
+            until = until + "T23:59:59.999999Z"
+        if updated_at > until:
+            return False
+    if scope.metadata is not None:
+        payload = metadata or {}
+        for key, value in scope.metadata.items():
+            if str(payload.get(key, "")) != value:
+                return False
+    return True

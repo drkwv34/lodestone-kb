@@ -7,7 +7,7 @@ import pytest
 from lodestone.config import Config, Retrieval
 from lodestone.fusion.pipeline import fused_search
 from lodestone.lanes.fts import search
-from lodestone.lanes.scope import Scope, parse_metadata
+from lodestone.lanes.scope import Scope, matches, parse_metadata
 
 
 def test_fr_041_metadata_filter_parser() -> None:
@@ -93,3 +93,22 @@ def test_fr_041_filters_property_500_combinations(database, record_factory) -> N
         if source == [] or kinds_f == [] or authors_f == [] or metadata == {}:
             assert fused.hits == []
             assert lane_hits == []
+
+
+def test_fr_041_matches_rejects_filter_violations() -> None:
+    row = dict(
+        kind="burst",
+        source="support",
+        author="owen",
+        authors=["owen"],
+        updated_at="2026-07-01T10:00:00Z",
+        metadata={"channel": "ops"},
+    )
+    assert matches(Scope(), **row)
+    assert not matches(Scope(kinds=["thread"]), **row)
+    assert not matches(Scope(sources=["wiki"]), **row)
+    assert not matches(Scope(authors=["maya"]), **row)
+    assert not matches(Scope(since="2026-08-01"), **row)
+    assert not matches(Scope(until="2026-06-01"), **row)
+    assert not matches(Scope(metadata={"channel": "chat"}), **row)
+    assert matches(Scope(kinds=["burst"], sources=["support"], authors=["owen"]), **row)

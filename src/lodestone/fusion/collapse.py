@@ -30,7 +30,9 @@ def group_key(item: Ranked) -> int:
     return item.parent_id if item.parent_id is not None else item.id
 
 
-def collapse(items: list[Ranked], *, max_per_source: int, pool: int) -> list[Collapsed]:
+def collapse(
+    items: list[Ranked], *, max_per_source: int, pool: int, promote_parent: bool = True
+) -> list[Collapsed]:
     """Keep the best-scoring member per parent, then cap sources inside the pool."""
     if max_per_source < 1 or pool < 1:
         raise ValueError("max_per_source and pool must be positive")
@@ -49,8 +51,13 @@ def collapse(items: list[Ranked], *, max_per_source: int, pool: int) -> list[Col
             members, key=lambda item: (item.score, item.updated_at, -item.id), reverse=True
         )[0]
         member_ids = tuple(item.id for item in members)
-        children = tuple(item.id for item in members if item.parent_id is not None)
-        representative = best.parent_id if best.parent_id is not None else best.id
+        if promote_parent and best.parent_id is not None:
+            representative = best.parent_id
+        else:
+            representative = best.id
+        children = tuple(
+            item.id for item in members if item.parent_id is not None and item.id != representative
+        )
         collapsed.append(
             Collapsed(
                 id=representative,

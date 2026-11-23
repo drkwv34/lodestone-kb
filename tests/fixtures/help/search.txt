@@ -13,23 +13,23 @@
 │ --project           <str>                                                    │
 │ --lane              <fts_raw|fts_card|fts_rare|  One lane; omit to fuse      │
 │                     vec_card|vec_chunk|grep>     available lanes.            │
-│ --source            <str>                        Source name; repeatable.    │
-│ --kind              <str>                        Record kind; repeatable.    │
-│ --author            <str>                        Author; repeatable.         │
+│ --source            <list[str]>                  Source name; repeatable.    │
+│ --kind              <list[str]>                  Record kind; repeatable.    │
+│ --author            <list[str]>                  Author; repeatable.         │
 │ --since             <str>                        Inclusive updated_at lower  │
 │                                                  bound.                      │
 │ --until             <str>                        Inclusive updated_at upper  │
 │                                                  bound.                      │
-│ --meta              <str>                        Metadata key=value;         │
+│ --meta              <list[str]>                  Metadata key=value;         │
 │                                                  repeatable.                 │
 │ --limit             <int range> [x>=1]           [default: 10]               │
-│ --json                                                                       │
-│ --offline                                                                    │
-│ --explain                                                                    │
-│ --no-decay                                                                   │
-│ --regex                                                                      │
-│ --rerank                                                                     │
+│ --json              <bool>                                                   │
+│ --offline           <bool>                                                   │
+│ --explain           <bool>                                                   │
+│ --no-decay          <bool>                                                   │
+│ --regex             <bool>                                                   │
+│ --rerank            <bool>                                                   │
 │ --provider          <str>                        fake or config.             │
-│ --help                                           Show this message and exit. │
+│ --help              <bool>                       Show this message and exit. │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 

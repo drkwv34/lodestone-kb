@@ -71,6 +71,28 @@
         }
       }
     },
-    "explain": { "type": ["object", "null"] }
+    "explain": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "lanes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["rank"],
+            "properties": {
+              "rank": { "type": "integer" },
+              "raw_score": { "type": "number" },
+              "contribution": { "type": "number" },
+              "score": { "type": "number" }
+            }
+          }
+        },
+        "rrf": { "type": "number" },
+        "decay_factor": { "type": "number" },
+        "rerank_score": { "type": ["number", "null"] },
+        "final": { "type": "number" }
+      }
+    }
   }
 }
