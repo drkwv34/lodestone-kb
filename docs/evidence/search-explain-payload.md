@@ -105,3 +105,9 @@ Totals: 16 passed, 0 failed (16 items)
 
 Main specs were synced from the change deltas before `--skip-specs` (FR-037, FR-040,
 FR-041, FR-042, FR-050, FR-052). `ruff format .` left 325 files unchanged.
+
+## Main post-archive CI
+
+- Archive commit: `afc52061c5944b5d3ecd37440fdf62785e43260f`
+- Run: https://github.com/drkwv34/lodestone-kb/actions/runs/45094262694
+- Conclusion: success (10/10 jobs, including macOS)
